@@ -11,4 +11,7 @@ public interface IAuthService {
     TokenResponse login(LoginRequest request);
     TokenResponse refreshToken(String refreshToken);
     void deleteRefreshToken(String token);
+
+    void sendResetLink(String email);
+    void resetPassword(String token, String newPassword);
 }

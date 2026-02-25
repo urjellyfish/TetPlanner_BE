@@ -19,7 +19,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Random;
 
 @Data
@@ -131,7 +133,52 @@ public class AuthService implements IAuthService {
         }
     }
 
+    @Override
+    public void sendResetLink(String email) {
+        String token = createResetCode(email);
+
+        //mot doi thanh link cua fe
+        String resetLink = "http://localhost:8080/api/auth/reset-password?token=" + token;
+
+        emailService.sendResetLink(email, resetLink);
+    }
+
+    @Override
+    public void resetPassword(String token, String newPassword) {
+        String key = "reset_code:" + token;
+        String email = redisService.get(key);
+
+        if (email == null) {
+            throw new RuntimeException("Invalid or expired reset code");
+        }
+
+        userRepository.findByEmail(email).ifPresent(user -> {
+            user.setHashPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+        });
+        redisService.delete(key);
+    }
+
+    private String createResetCode(String email) {
+        if (!userRepository.existsByEmail(email)) {
+            throw new RuntimeException("Email not found");
+        }
+        String token = generateSecureToken();
+        String key = "reset_code:" + token;
+        redisService.save(
+                key,
+                email,
+                900);
+        return token;
+    }
+
     private String generateCode() {
         return String.valueOf(new Random().nextInt(9000) + 1000);
+    }
+
+    private String generateSecureToken() {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 }

@@ -1,9 +1,7 @@
 package com.wecamp.TetPlanner_BE.controller;
 
 import com.wecamp.TetPlanner_BE.dto.BaseResponse;
-import com.wecamp.TetPlanner_BE.dto.request.LoginRequest;
-import com.wecamp.TetPlanner_BE.dto.request.RegisterRequest;
-import com.wecamp.TetPlanner_BE.dto.request.VerifyRequest;
+import com.wecamp.TetPlanner_BE.dto.request.*;
 import com.wecamp.TetPlanner_BE.dto.response.TokenResponse;
 import com.wecamp.TetPlanner_BE.service.IAuthService;
 import lombok.Data;
@@ -69,6 +67,31 @@ public class AuthController {
                         "Token refresh successfully",
                         token
                 ));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<BaseResponse<?>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        authService.sendResetLink(request.getEmail());
+        return ResponseEntity.ok(new BaseResponse<>(
+                true,
+                "Reset code sent to email",
+                null
+        ));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<BaseResponse<?>> resetPassword(
+            @RequestParam String token,
+            @RequestBody ResetPasswordRequest request) {
+
+        authService.resetPassword(token, request.getNewPassword());
+
+        return ResponseEntity
+                .ok(new BaseResponse<>(
+                true,
+                "Password reset successfully",
+                null
+        ));
     }
 
     @DeleteMapping("/logout")
