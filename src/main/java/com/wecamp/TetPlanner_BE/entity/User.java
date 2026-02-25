@@ -3,7 +3,7 @@ package com.wecamp.TetPlanner_BE.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -27,5 +27,5 @@ public class User {
 
     private boolean isEmailVerified;
 
-    private Date createdAt;
+    private Instant createdAt;
 }

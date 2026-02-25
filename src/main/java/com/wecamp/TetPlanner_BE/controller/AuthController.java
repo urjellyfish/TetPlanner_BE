@@ -11,10 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Data
 @RestController
@@ -46,15 +43,31 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<BaseResponse<?>> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<BaseResponse<TokenResponse>> login(@RequestBody LoginRequest request) {
         TokenResponse tokenResponse = authService.login(request);
         ResponseCookie cookie = setCookieToken(tokenResponse.getRefreshToken());
-        return ResponseEntity.status(HttpStatus.OK)
+        return ResponseEntity
+                .ok()
                 .header("Set-Cookie", cookie.toString())
                 .body(new BaseResponse<>(
                         true,
                         "Login successful",
                         tokenResponse
+                ));
+
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<BaseResponse<TokenResponse>> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
+        TokenResponse token = authService.refreshToken(refreshToken);
+        ResponseCookie cookie = setCookieToken(token.getRefreshToken());
+        return ResponseEntity
+                .ok()
+                .header("Set-cookie", cookie.toString())
+                .body(new BaseResponse<>(
+                        true,
+                        "Token refresh successfully",
+                        token
                 ));
     }
 
