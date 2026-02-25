@@ -10,4 +10,5 @@ public interface IAuthService {
     void verifyEmail(VerifyRequest request);
     TokenResponse login(LoginRequest request);
     TokenResponse refreshToken(String refreshToken);
+    void deleteRefreshToken(String token);
 }

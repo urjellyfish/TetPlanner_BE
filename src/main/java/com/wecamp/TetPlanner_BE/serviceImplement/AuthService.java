@@ -123,7 +123,7 @@ public class AuthService implements IAuthService {
     }
 
     @Transactional
-    private void deleteRefreshToken(String token) {
+    public void deleteRefreshToken(String token) {
         try {
             refreshTokenRepository.deleteByToken(token);
         } catch (RuntimeException e){
