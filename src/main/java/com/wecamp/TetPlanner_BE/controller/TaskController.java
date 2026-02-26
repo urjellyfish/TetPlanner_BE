@@ -7,6 +7,7 @@ import com.wecamp.TetPlanner_BE.dto.response.TaskListResponse;
 import com.wecamp.TetPlanner_BE.dto.response.TaskResponse;
 import com.wecamp.TetPlanner_BE.entity.enums.Priority;
 import com.wecamp.TetPlanner_BE.entity.enums.Status;
+import com.wecamp.TetPlanner_BE.security.JwtUtil;
 import com.wecamp.TetPlanner_BE.service.ITaskService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -17,12 +18,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/tasks")
 @AllArgsConstructor
 public class TaskController {
     public final ITaskService taskService;
+    public final JwtUtil jwtUtil;
 
     @GetMapping
     public ResponseEntity<BaseResponse<List<TaskListResponse>>> getTasks(
@@ -42,6 +45,19 @@ public class TaskController {
                     .body(new BaseResponse<>(false, "Error retrieving tasks: " + e.getMessage(), null));
         }
     }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<BaseResponse<List<TaskListResponse>>> getTasksByUserId(@PathVariable UUID userId) {
+        try {
+            List<TaskListResponse> tasks = taskService.getTasksByUserId(userId);
+            return ResponseEntity.ok(new BaseResponse<>(true, "Tasks retrieved successfully", tasks));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new BaseResponse<>(false, e.getMessage(), null));
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<TaskResponse>> getTaskById(@PathVariable Long id) {
         try {
@@ -53,10 +69,21 @@ public class TaskController {
                     .body(new BaseResponse<>(false, "Task not found with id: " + id, null));
         }
     }
+
     @PostMapping
-    public ResponseEntity<BaseResponse<TaskResponse>> createTask(@Valid @RequestBody TaskRequest taskRequest) {
+    public ResponseEntity<BaseResponse<TaskResponse>> createTask(
+            @Valid @RequestBody TaskRequest taskRequest,
+            @RequestHeader("Authorization") String authorizationHeader
+    ) {
         try {
-            TaskResponse task = taskService.createTask(taskRequest);
+            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Invalid or missing authorization token", null));
+            }
+
+            String token = authorizationHeader.substring(7);
+            TaskResponse task = taskService.createTask(taskRequest, jwtUtil.extractUserId(token));
             return ResponseEntity.ok(new BaseResponse<>(true, "Task created successfully", task));
         } catch (RuntimeException e) {
             return ResponseEntity
@@ -64,6 +91,7 @@ public class TaskController {
                     .body(new BaseResponse<>(false, e.getMessage(), null));
         }
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<BaseResponse<Void>> deleteTask(@PathVariable Long id) {
 
@@ -76,6 +104,7 @@ public class TaskController {
                     .body(new BaseResponse<>(false, "Task not found with id: " + id, null));
         }
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<BaseResponse<TaskResponse>> updateTask(@Valid @RequestBody TaskRequest taskRequest, @PathVariable Long id) {
         try {
@@ -99,8 +128,4 @@ public class TaskController {
                     .body(new BaseResponse<>(false, "Task not found with id: " + id, null));
         }
     }
-
-
-
-
 }

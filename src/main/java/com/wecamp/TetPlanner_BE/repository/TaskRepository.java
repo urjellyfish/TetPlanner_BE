@@ -12,6 +12,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
@@ -31,6 +33,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             Pageable pageable
 
     );
+    List<Task> findByUserIdAndIsDeletedFalse(UUID userId);
+
     @Modifying
     @Query("UPDATE Task t SET t.isDeleted = true WHERE t.id = :id")
     void softDeleteById(@Param("id")Long id);

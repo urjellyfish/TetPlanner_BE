@@ -23,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -33,7 +35,6 @@ public class TaskServiceImpl implements ITaskService {
     private final OccasionRepository occasionRepository;
     private final UserRepository userRepository;
 
-
     @Override
     public Page<TaskListResponse> getTasks(Long categoryId, Priority priority, Status status, LocalDate dueDate, Pageable pageable) {
         return taskRepository.findAllWithFilters(categoryId, priority, status, dueDate, pageable)
@@ -42,49 +43,46 @@ public class TaskServiceImpl implements ITaskService {
                             .orElse(null);
                     return TaskListResponse.convertToDTO(task, occasion);
                 });
-
     }
 
     @Override
     public TaskResponse getTask(Long id) {
-            Task task = taskRepository.findById(id)
-                    .filter(t -> !t.isDeleted())
-                    .orElseThrow(() -> new RuntimeException("Task not found"));
-                return TaskResponse.convertToDTO(task);
-
+        Task task = taskRepository.findById(id)
+                .filter(t -> !t.isDeleted())
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+        return TaskResponse.convertToDTO(task);
     }
 
     @Override
-    public TaskResponse createTask( TaskRequest taskRequest) {
-        User user = userRepository.findById(taskRequest.getUserId())
+    public TaskResponse createTask(TaskRequest taskRequest, UUID userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-            Task task = new Task();
-            task.setTitle(taskRequest.getTitle());
-            task.setNote(taskRequest.getNote());
-            TaskCategory category = taskCategoryRepository.findById(taskRequest.getCategoryId()).orElseThrow(() -> new RuntimeException("Category not found"));
-            task.setCategory(category);
-            task.setStatus(taskRequest.getStatus() != null ? taskRequest.getStatus() : Status.TODO);
-            task.setDueDate(taskRequest.getDueDate());
-            task.setUser(user);
-            task.setDueTime(taskRequest.getDueTime());
-            task.setPriority(taskRequest.getPriority());
-            task.setEstimatedBudget(taskRequest.getEstimatedBudget());
-            task.setCreatedAt(LocalDateTime.now());
+        Task task = new Task();
+        task.setTitle(taskRequest.getTitle());
+        task.setNote(taskRequest.getNote());
+        TaskCategory category = taskCategoryRepository.findById(taskRequest.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        task.setCategory(category);
+        task.setStatus(taskRequest.getStatus() != null ? taskRequest.getStatus() : Status.TODO);
+        task.setDueDate(taskRequest.getDueDate());
+        task.setUser(user);
+        task.setDueTime(taskRequest.getDueTime());
+        task.setPriority(taskRequest.getPriority());
+        task.setEstimatedBudget(taskRequest.getEstimatedBudget());
+        task.setCreatedAt(LocalDateTime.now());
         return TaskResponse.convertToDTO(taskRepository.save(task));
     }
 
     @Override
-
     public void deleteTask(Long id) {
-        Task task = taskRepository.findById(id) .orElseThrow(() -> new RuntimeException("Task not found"));
+        Task task = taskRepository.findById(id).orElseThrow(() -> new RuntimeException("Task not found"));
 
         if (task.isDeleted()) {
             throw new RuntimeException("Task already deleted: " + id);
         }
 
         taskRepository.softDeleteById(id);
-
     }
 
     @Override
@@ -92,7 +90,8 @@ public class TaskServiceImpl implements ITaskService {
         Task task = taskRepository.findById(id).orElseThrow(() -> new RuntimeException("Task not found"));
         task.setTitle(request.getTitle());
         task.setNote(request.getNote());
-        TaskCategory category = taskCategoryRepository.findById(request.getCategoryId()).orElseThrow(() -> new RuntimeException("Category not found"));
+        TaskCategory category = taskCategoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found"));
         task.setCategory(category);
         task.setStatus(request.getStatus());
         task.setDueDate(request.getDueDate());
@@ -101,8 +100,7 @@ public class TaskServiceImpl implements ITaskService {
         task.setUpdatedAt(LocalDateTime.now());
         task.setEstimatedBudget(request.getEstimatedBudget());
 
-
-        return  TaskResponse.convertToDTO(taskRepository.save(task));
+        return TaskResponse.convertToDTO(taskRepository.save(task));
     }
 
     @Override
@@ -114,5 +112,16 @@ public class TaskServiceImpl implements ITaskService {
         task.setUpdatedAt(LocalDateTime.now());
         taskRepository.save(task);
         return TaskResponse.convertToDTO(task);
+    }
+
+    @Override
+    public List<TaskListResponse> getTasksByUserId(UUID userId) {
+        return taskRepository.findByUserIdAndIsDeletedFalse(userId)
+                .stream()
+                .map(task -> {
+                    Occasion occasion = occasionRepository.findByDate(task.getDueDate()).orElse(null);
+                    return TaskListResponse.convertToDTO(task, occasion);
+                })
+                .toList();
     }
 }
