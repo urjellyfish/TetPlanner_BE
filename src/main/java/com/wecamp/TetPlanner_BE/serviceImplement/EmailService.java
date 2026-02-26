@@ -26,4 +26,18 @@ public class EmailService implements IEmailService {
 
         mailSender.send(message);
     }
+
+    @Override
+    public void sendResetLink(String to, String code) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Your verification code");
+        message.setText(
+                "Your reset password link is: " + code +
+                        "\n\nThis link expires in 15 minutes."
+        );
+
+        mailSender.send(message);
+
+    }
 }
