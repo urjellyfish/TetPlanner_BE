@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.UUID;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -34,8 +33,5 @@ public class TaskRequest {
     @DecimalMin(value = "0.0", inclusive = true, message = "Estimated budget must be zero or positive")
     private BigDecimal estimatedBudget;
     private String note;
-    @NotNull(message = "User ID is required")
-    private UUID userId;
-
 
 }
