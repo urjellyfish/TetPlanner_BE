@@ -13,5 +13,4 @@ public interface TaskCategoryRepository extends JpaRepository<TaskCategory, Long
     @Query("UPDATE TaskCategory t SET t.isDeleted = true WHERE t.id = :id")
     void softDeleteById(@Param("id")Long id);
     boolean existsByNameAndIsDeletedFalse(String name);
-    boolean existsByName(String name);
 }
