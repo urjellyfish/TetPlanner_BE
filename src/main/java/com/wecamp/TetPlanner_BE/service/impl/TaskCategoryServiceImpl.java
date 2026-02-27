@@ -53,8 +53,8 @@ public class TaskCategoryServiceImpl implements ITaskCategoryService {
         if(dto.isDeleted()){
             throw new RuntimeException("Task has already been deleted");
         }
-        dto.setDeleted(true);
-        taskCategoryRepository.save(dto);
+
+        taskCategoryRepository.softDeleteById(id);
 
     }
 
