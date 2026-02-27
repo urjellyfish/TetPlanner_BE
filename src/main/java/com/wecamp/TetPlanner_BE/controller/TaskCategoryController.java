@@ -4,6 +4,7 @@ import com.wecamp.TetPlanner_BE.dto.BaseResponse;
 import com.wecamp.TetPlanner_BE.dto.request.TaskCategoryRequest;
 import com.wecamp.TetPlanner_BE.dto.response.TaskCategoryResponse;
 import com.wecamp.TetPlanner_BE.service.ITaskCategoryService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +38,7 @@ public class TaskCategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<BaseResponse<TaskCategoryResponse>> createTaskCategory(@RequestBody TaskCategoryRequest request) {
+    public ResponseEntity<BaseResponse<TaskCategoryResponse>> createTaskCategory(@Valid @RequestBody TaskCategoryRequest request) {
         try {
             TaskCategoryResponse createdCategory = taskCategoryService.create(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(new BaseResponse<>(true, "Task category created successfully", createdCategory));
@@ -48,7 +49,7 @@ public class TaskCategoryController {
         }
     }
     @PutMapping("/{id}")
-    public ResponseEntity<BaseResponse<TaskCategoryResponse>> updateTaskCategory(@PathVariable Long id, @RequestBody TaskCategoryRequest request) {
+    public ResponseEntity<BaseResponse<TaskCategoryResponse>> updateTaskCategory( @PathVariable Long id, @Valid @RequestBody TaskCategoryRequest request) {
         try {
             TaskCategoryResponse updatedCategory = taskCategoryService.update(id, request);
             return ResponseEntity.ok(new BaseResponse<>(true, "Task category updated successfully", updatedCategory));

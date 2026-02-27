@@ -20,7 +20,7 @@ public class TaskCategoryServiceImpl implements ITaskCategoryService {
     @Override
     public TaskCategoryResponse create(TaskCategoryRequest request) {
         TaskCategory dto = new TaskCategory();
-        if (taskCategoryRepository.existsByName(request.getName())) {
+        if (taskCategoryRepository.existsByNameAndIsDeletedFalse(request.getName())) {
             throw new RuntimeException("Task category already exists");
         }
             dto.setName(request.getName());
@@ -32,7 +32,15 @@ public class TaskCategoryServiceImpl implements ITaskCategoryService {
 
     @Override
     public TaskCategoryResponse update(Long id, TaskCategoryRequest request) {
+
+
         TaskCategory dto = taskCategoryRepository.findById(id).orElseThrow(() -> new RuntimeException("Task category not found"));
+        if (taskCategoryRepository.existsByNameAndIsDeletedFalse(request.getName())) {
+            throw new RuntimeException("Task category already exists");
+        }
+        if(dto.isDeleted()){
+            throw new RuntimeException("Task has arleady been deleted");
+        }
         dto.setName(request.getName());
         taskCategoryRepository.save(dto);
         return TaskCategoryResponse.convertToDTO(dto) ;
@@ -40,7 +48,11 @@ public class TaskCategoryServiceImpl implements ITaskCategoryService {
 
     @Override
     public void delete(Long id) {
+
         TaskCategory dto = taskCategoryRepository.findById(id).orElseThrow(() -> new RuntimeException("Task category not found"));
+        if(dto.isDeleted()){
+            throw new RuntimeException("Task has already been deleted");
+        }
         dto.setDeleted(true);
         taskCategoryRepository.save(dto);
 
