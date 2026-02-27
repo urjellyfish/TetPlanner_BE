@@ -15,4 +15,5 @@ public class TaskCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+    private boolean isDeleted = false;
 }
