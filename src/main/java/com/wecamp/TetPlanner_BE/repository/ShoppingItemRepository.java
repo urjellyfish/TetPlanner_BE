@@ -20,8 +20,9 @@ public interface ShoppingItemRepository extends JpaRepository<ShoppingItem, UUID
     """)
     Long getTotalExpenseByBudgetId(@Param("budgetId") UUID budgetId);
 
-
     List<ShoppingItem> findByBudgetId(UUID budgetId);
+
+    List<ShoppingItem> findByBudget_IdIn(List<UUID> budgetIds);
 
     Page<ShoppingItem> getAllByBudgetId(UUID budgetId, Pageable pageable);
 }
