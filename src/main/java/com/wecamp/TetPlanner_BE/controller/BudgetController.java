@@ -7,9 +7,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.function.EntityResponse;
 
 import java.util.UUID;
@@ -21,12 +19,13 @@ import java.util.UUID;
 public class BudgetController {
     private final IBudgetService budgetService;
 
-    @GetMapping("/summary")
+    @GetMapping("/{budgetId}/summary")
     public ResponseEntity<BaseResponse<BudgetSummaryResponse>> getBudgetSummary(
-            Authentication authentication
+            Authentication authentication,
+            @PathVariable UUID budgetId
     ) {
         UUID userId = UUID.fromString(authentication.getName());
-        BudgetSummaryResponse response = budgetService.getBudgetSummaryForCurrentYear(userId);
+        BudgetSummaryResponse response = budgetService.getBudgetSummaryForCurrentYear(userId, budgetId);
         return ResponseEntity
                 .ok(new BaseResponse<>(
                         true,

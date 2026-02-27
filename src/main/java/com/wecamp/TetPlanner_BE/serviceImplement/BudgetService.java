@@ -2,17 +2,16 @@ package com.wecamp.TetPlanner_BE.serviceImplement;
 
 import com.wecamp.TetPlanner_BE.dto.mapper.BudgetMapper;
 import com.wecamp.TetPlanner_BE.dto.response.BudgetSummaryResponse;
-import com.wecamp.TetPlanner_BE.dto.response.CategoryTotalDTO;
 import com.wecamp.TetPlanner_BE.entity.Budget;
+import com.wecamp.TetPlanner_BE.entity.ShoppingItem;
 import com.wecamp.TetPlanner_BE.entity.enums.BudgetStatus;
 import com.wecamp.TetPlanner_BE.exception.NotFound;
 import com.wecamp.TetPlanner_BE.repository.BudgetRepository;
 import com.wecamp.TetPlanner_BE.repository.ShoppingItemRepository;
 import com.wecamp.TetPlanner_BE.service.IBudgetService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.crossstore.ChangeSetPersister;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Year;
@@ -28,36 +27,45 @@ public class BudgetService implements IBudgetService {
     private final BudgetMapper budgetMapper;
 
     @Override
-    public BudgetSummaryResponse getBudgetSummaryForCurrentYear(UUID userId) {
+    public Page<Budget> getBudgetsForUser(UUID userId, Pageable pageable) {
+        return null;
+    }
 
-        int currentYear = Year.now().getValue();
+    @Override
+    public BudgetSummaryResponse getBudgetSummaryForCurrentYear(UUID userId, UUID budgetId) {
 
         Budget budget = budgetRepository
-                .findCurrentYearBudget(userId, currentYear)
+                .findByIdAndUserId(budgetId, userId)
                 .orElseThrow(() -> new NotFound("Budget not found"));
 
-        Long totalExpense =
-                shoppingItemRepository.getTotalExpenseByBudgetId(budget.getId());
+        List<ShoppingItem> items =
+                shoppingItemRepository.findByBudgetId(budget.getId());
 
-        Long totalBudget = budget.getTotalAmount();
+        long actualSpent = items.stream()
+                .filter(ShoppingItem::getIsChecked)
+                .mapToLong(i -> i.getPrice() * i.getQuantity())
+                .sum();
 
-        int percentageUsed = totalBudget == 0
-                ? 0
-                : (int) ((totalExpense * 100) / totalBudget);
+        long expectedSpent = items.stream()
+                .mapToLong(i -> i.getPrice() * i.getQuantity())
+                .sum();
 
-        BudgetStatus status = calculateStatus(percentageUsed);
+        long totalBudget = budget.getTotalAmount();
 
-        List<CategoryTotalDTO> breakdown =
-                shoppingItemRepository.getBreakdownByBudgetId(budget.getId());
-
-        return budgetMapper.toSummaryResponse(
-                totalBudget,
-                totalExpense,
-                totalBudget - totalExpense,
-                percentageUsed,
-                status,
-                breakdown
-        );
+        return BudgetSummaryResponse.builder()
+                .id(budget.getId())
+                .name(budget.getName())
+                .totalAmount(totalBudget)
+                .actualSpent(actualSpent)
+                .expectedSpent(expectedSpent)
+                .actualRemaining(totalBudget - actualSpent)
+                .expectedRemaining(totalBudget - expectedSpent)
+                .shoppingItems(
+                        items.stream()
+                                .map(budgetMapper::toShoppingItemDTO)
+                                .toList()
+                )
+                .build();
     }
 
     private BudgetStatus calculateStatus(int percentage) {

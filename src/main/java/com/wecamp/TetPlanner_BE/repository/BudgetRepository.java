@@ -8,11 +8,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface BudgetRepository extends JpaRepository<Budget, UUID> {
-    @Query("""
-        SELECT b
-        FROM Budget b
-        WHERE b.user.id = :userId
-        AND EXTRACT(YEAR FROM b.startDate) = :year
-    """)
-    Optional<Budget> findCurrentYearBudget(UUID userId, int year);
+    Optional<Budget> findByIdAndUserId(UUID id, UUID userId);
 }

@@ -1,8 +1,8 @@
 package com.wecamp.TetPlanner_BE.repository;
 
-import com.wecamp.TetPlanner_BE.dto.response.BreakDownCategoryResponse;
-import com.wecamp.TetPlanner_BE.dto.response.CategoryTotalDTO;
 import com.wecamp.TetPlanner_BE.entity.ShoppingItem;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,14 +21,7 @@ public interface ShoppingItemRepository extends JpaRepository<ShoppingItem, UUID
     Long getTotalExpenseByBudgetId(@Param("budgetId") UUID budgetId);
 
 
-    @Query("""
-    SELECT new com.wecamp.TetPlanner_BE.dto.response.CategoryTotalDTO(
-        s.category.name,
-        SUM(s.price * s.quantity)
-    )
-    FROM ShoppingItem s
-    WHERE s.budget.id = :budgetId
-    GROUP BY s.category.name
-""")
-    List<CategoryTotalDTO> getBreakdownByBudgetId(UUID budgetId);
+    List<ShoppingItem> findByBudgetId(UUID budgetId);
+
+    Page<ShoppingItem> getAllByBudgetId(UUID budgetId, Pageable pageable);
 }
