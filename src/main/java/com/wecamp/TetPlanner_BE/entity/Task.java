@@ -7,10 +7,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.UUID;
 
 @Table(name = "tasks")
 @Entity
@@ -19,15 +19,23 @@ import java.time.LocalTime;
 @Data
 public class Task {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    private UUID id;
+
+    @Column(nullable = false, length = 255)
     private String title;
-    private String note;
+
+    @Column(length = 300)
+    private String description;
+
     @Enumerated(EnumType.STRING)
     private Priority priority;
+
     @Enumerated(EnumType.STRING)
     private Status status;
-    private BigDecimal estimatedBudget;
+
+    private LocalDate startDate;
+    private LocalTime startTime;
     private LocalDate dueDate;
     private LocalTime dueTime;
 
