@@ -5,6 +5,7 @@ import com.wecamp.TetPlanner_BE.dto.request.task.TaskRequest;
 import com.wecamp.TetPlanner_BE.dto.request.TaskUpdateRequest;
 import com.wecamp.TetPlanner_BE.dto.request.task.UpdateTaskStatusRequest;
 import com.wecamp.TetPlanner_BE.dto.response.TaskListResponse;
+import com.wecamp.TetPlanner_BE.dto.response.TaskProgressResponse;
 import com.wecamp.TetPlanner_BE.dto.response.TaskResponse;
 import com.wecamp.TetPlanner_BE.entity.enums.Priority;
 import com.wecamp.TetPlanner_BE.entity.enums.Status;
@@ -66,6 +67,25 @@ public class TaskController {
             UUID userId = jwtUtil.extractUserId(bearerToken);
             List<TaskListResponse> tasks = taskService.getTasksByUserId(userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Tasks retrieved successfully", tasks));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new BaseResponse<>(false, e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/progress")
+    public ResponseEntity<BaseResponse<TaskProgressResponse>> getTaskProgress(@RequestHeader("Authorization") String token) {
+        try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Unauthorized: Missing or invalid token", null));
+            }
+            String bearerToken = token.substring(7);
+            UUID userId = jwtUtil.extractUserId(bearerToken);
+            TaskProgressResponse progress = taskService.getTaskProgress(userId);
+            return ResponseEntity.ok(new BaseResponse<>(true, "Task progress retrieved successfully", progress));
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)

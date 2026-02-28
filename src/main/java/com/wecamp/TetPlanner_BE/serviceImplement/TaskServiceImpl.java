@@ -4,6 +4,7 @@ import com.wecamp.TetPlanner_BE.dto.request.TaskUpdateRequest;
 import com.wecamp.TetPlanner_BE.dto.request.task.TaskRequest;
 import com.wecamp.TetPlanner_BE.dto.request.task.UpdateTaskStatusRequest;
 import com.wecamp.TetPlanner_BE.dto.response.TaskListResponse;
+import com.wecamp.TetPlanner_BE.dto.response.TaskProgressResponse;
 import com.wecamp.TetPlanner_BE.dto.response.TaskResponse;
 import com.wecamp.TetPlanner_BE.entity.Occasion;
 import com.wecamp.TetPlanner_BE.entity.Task;
@@ -202,6 +203,14 @@ public class TaskServiceImpl implements ITaskService {
                 .stream()
                 .map(task -> TaskListResponse.convertToDTO(task, task.getOccasion()))
                 .toList();
+    }
+
+    @Override
+    public TaskProgressResponse getTaskProgress(UUID userId) {
+        long total = taskRepository.countByUserIdAndNotDeleted(userId);
+        long completed = taskRepository.countByUserIdAndStatusDone(userId);
+        int percentage = total > 0 ? (int) Math.round((double) completed / total * 100) : 0;
+        return new TaskProgressResponse(total, completed, percentage);
     }
 
     private void validateTimeLogic(LocalDate startDate, LocalTime startTime, LocalDate dueDate, LocalTime dueTime) {
