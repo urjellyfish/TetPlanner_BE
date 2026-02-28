@@ -6,11 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "task_categories")
+@Table(name = "shopping_categories")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class TaskCategory {
+public class ShoppingCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
