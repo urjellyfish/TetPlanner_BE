@@ -48,9 +48,12 @@ public class OccasionService implements IOccasionService {
 
     @Override
     @Transactional(readOnly = true)
-    public OccasionResponse getOccasion(UUID id) {
+    public OccasionResponse getOccasion(UUID id, UUID userId) {
         Occasion occasion = occasionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Occasion not found"));
+        if (!occasion.getUser().getId().equals(userId)) {
+            throw new SecurityException("You do not have permission to access this occasion");
+        }
         return OccasionResponse.convertToDTO(occasion);
     }
 

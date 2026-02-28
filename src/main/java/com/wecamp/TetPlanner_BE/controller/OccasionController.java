@@ -23,7 +23,7 @@ public class OccasionController {
     private final IOccasionService occasionService;
     private final JwtUtil jwtUtil;
 
-    @PostMapping("/create")
+    @PostMapping()
     public ResponseEntity<BaseResponse<OccasionResponse>> createOccasion(
             @Valid @RequestBody OccasionRequest request,
             @RequestHeader("Authorization") String authorizationHeader
@@ -49,10 +49,24 @@ public class OccasionController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BaseResponse<OccasionResponse>> getOccasion(@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<OccasionResponse>> getOccasion(
+            @PathVariable UUID id,
+            @RequestHeader("Authorization") String authorizationHeader
+    ) {
         try {
-            OccasionResponse occasion = occasionService.getOccasion(id);
+            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Invalid or missing authorization token", null));
+            }
+            String token = authorizationHeader.substring(7);
+            UUID userId = jwtUtil.extractUserId(token);
+            OccasionResponse occasion = occasionService.getOccasion(id, userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Occasion retrieved successfully", occasion));
+        } catch (SecurityException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new BaseResponse<>(false, e.getMessage(), null));
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
@@ -60,7 +74,7 @@ public class OccasionController {
         }
     }
 
-    @GetMapping("/user")
+    @GetMapping
     public ResponseEntity<BaseResponse<List<OccasionResponse>>> getOccasionsByUser(
             @RequestHeader("Authorization") String authorizationHeader
     ) {
@@ -82,7 +96,7 @@ public class OccasionController {
         }
     }
 
-    @GetMapping("/user/range")
+    @GetMapping("/range")
     public ResponseEntity<BaseResponse<List<OccasionResponse>>> getOccasionsByDateRange(
             @RequestParam LocalDate from,
             @RequestParam LocalDate to,

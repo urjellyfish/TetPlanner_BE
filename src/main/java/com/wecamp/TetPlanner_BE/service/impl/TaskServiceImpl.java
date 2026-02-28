@@ -38,8 +38,8 @@ public class TaskServiceImpl implements ITaskService {
     private final UserRepository userRepository;
 
     @Override
-    public Page<TaskListResponse> getTasks(Long categoryId, Priority priority, Status status, LocalDate dueDate, Pageable pageable) {
-        return taskRepository.findAllWithFilters(categoryId, priority, status, dueDate, pageable)
+    public Page<TaskListResponse> getTasks(UUID userId, Long categoryId, Priority priority, Status status, LocalDate dueDate, Pageable pageable) {
+        return taskRepository.findAllWithFilters(userId, categoryId, priority, status, dueDate, pageable)
                 .map(task -> {
                     Occasion occasion = task.getOccasion();
                     return TaskListResponse.convertToDTO(task, occasion);
@@ -47,10 +47,13 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
-    public TaskResponse getTask(UUID id) {
+    public TaskResponse getTask(UUID id, UUID userId) {
         Task task = taskRepository.findById(id)
                 .filter(t -> !t.isDeleted())
                 .orElseThrow(() -> new RuntimeException("Task not found"));
+        if (!task.getUser().getId().equals(userId)) {
+            throw new SecurityException("You do not have permission to access this task");
+        }
         return TaskResponse.convertToDTO(task);
     }
 
@@ -178,10 +181,14 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
-    public TaskResponse updateTaskStatus(UpdateTaskStatusRequest request, UUID id) {
+    public TaskResponse updateTaskStatus(UpdateTaskStatusRequest request, UUID id, UUID userId) {
         Task task = taskRepository.findById(id)
                 .filter(t -> !t.isDeleted())
                 .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        if (!task.getUser().getId().equals(userId)) {
+            throw new SecurityException("You do not have permission to update this task");
+        }
 
         task.setStatus(request.getStatus());
         task.setUpdatedAt(LocalDateTime.now());

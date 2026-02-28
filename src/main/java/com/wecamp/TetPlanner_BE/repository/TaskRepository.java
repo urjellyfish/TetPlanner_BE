@@ -20,12 +20,14 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("""
     SELECT t FROM Task t
     WHERE t.isDeleted = false
+      AND t.user.id = :userId
       AND (:categoryId IS NULL OR t.category.id = :categoryId)
       AND (:priority IS NULL OR t.priority = :priority)
       AND (:status IS NULL OR t.status = :status)
       AND (:dueDate IS NULL OR t.dueDate = :dueDate)
 """)
     Page<Task> findAllWithFilters(
+            @Param("userId") UUID userId,
             @Param("categoryId") Long categoryId,
             @Param("priority") Priority priority,
             @Param("status") Status status,

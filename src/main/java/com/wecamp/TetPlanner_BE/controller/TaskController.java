@@ -30,6 +30,7 @@ public class TaskController {
 
     @GetMapping
     public ResponseEntity<BaseResponse<List<TaskListResponse>>> getTasks(
+            @RequestHeader("Authorization") String token,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Priority priority,
             @RequestParam(required = false) Status status,
@@ -37,7 +38,14 @@ public class TaskController {
             Pageable pageable
     ) {
         try {
-            List<TaskListResponse> tasks = taskService.getTasks(categoryId, priority, status, dueDate, pageable).getContent();
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Unauthorized: Missing or invalid token", null));
+            }
+            String bearerToken = token.substring(7);
+            UUID userId = jwtUtil.extractUserId(bearerToken);
+            List<TaskListResponse> tasks = taskService.getTasks(userId, categoryId, priority, status, dueDate, pageable).getContent();
             return ResponseEntity.ok(new BaseResponse<>(true, "Tasks retrieved successfully", tasks));
         } catch (RuntimeException e) {
             return ResponseEntity
@@ -46,9 +54,16 @@ public class TaskController {
         }
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<BaseResponse<List<TaskListResponse>>> getTasksByUserId(@PathVariable UUID userId) {
+    @GetMapping("/user")
+    public ResponseEntity<BaseResponse<List<TaskListResponse>>> getTasksByUser(@RequestHeader("Authorization") String token) {
         try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Unauthorized: Missing or invalid token", null));
+            }
+            String bearerToken = token.substring(7);
+            UUID userId = jwtUtil.extractUserId(bearerToken);
             List<TaskListResponse> tasks = taskService.getTasksByUserId(userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Tasks retrieved successfully", tasks));
         } catch (RuntimeException e) {
@@ -59,9 +74,16 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BaseResponse<TaskResponse>> getTaskById(@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<TaskResponse>> getTaskById(@RequestHeader("Authorization") String token, @PathVariable UUID id) {
         try {
-            TaskResponse task = taskService.getTask(id);
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Unauthorized: Missing or invalid token", null));
+            }
+            String bearerToken = token.substring(7);
+            UUID userId = jwtUtil.extractUserId(bearerToken);
+            TaskResponse task = taskService.getTask(id, userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Task retrieved successfully", task));
         } catch (RuntimeException e) {
             return ResponseEntity
@@ -156,11 +178,19 @@ public class TaskController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<BaseResponse<TaskResponse>> updateTaskStatus(
+            @RequestHeader("Authorization") String token,
             @Valid @RequestBody UpdateTaskStatusRequest status,
             @PathVariable UUID id
     ) {
         try {
-            TaskResponse task = taskService.updateTaskStatus(status, id);
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Unauthorized: Missing or invalid token", null));
+            }
+            String bearerToken = token.substring(7);
+            UUID userId = jwtUtil.extractUserId(bearerToken);
+            TaskResponse task = taskService.updateTaskStatus(status, id, userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Task status updated successfully", task));
         } catch (RuntimeException e) {
             return ResponseEntity

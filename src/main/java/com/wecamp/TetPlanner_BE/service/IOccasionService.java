@@ -12,7 +12,7 @@ public interface IOccasionService {
 
     OccasionResponse createOccasion(OccasionRequest request, UUID userId);
 
-    OccasionResponse getOccasion(UUID id);
+    OccasionResponse getOccasion(UUID id, UUID userId);
 
     List<OccasionResponse> getOccasionsByUserId(UUID userId);
 

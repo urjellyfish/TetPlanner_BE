@@ -15,13 +15,14 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ITaskService {
-    Page<TaskListResponse> getTasks(Long categoryId,
+    Page<TaskListResponse> getTasks(UUID userId,
+                                    Long categoryId,
                                     Priority priority,
                                     Status status,
                                     LocalDate dueDate,
                                     Pageable pageable);
 
-    TaskResponse getTask(UUID id);
+    TaskResponse getTask(UUID id, UUID userId);
 
     TaskResponse createTask(TaskRequest taskRequest, UUID userId);
 
@@ -29,7 +30,7 @@ public interface ITaskService {
 
     TaskResponse updateTask(TaskUpdateRequest request, UUID id, UUID userId);
 
-    TaskResponse updateTaskStatus(UpdateTaskStatusRequest status, UUID id);
+    TaskResponse updateTaskStatus(UpdateTaskStatusRequest status, UUID id, UUID userId);
 
     List<TaskListResponse> getTasksByUserId(UUID userId);
 }
