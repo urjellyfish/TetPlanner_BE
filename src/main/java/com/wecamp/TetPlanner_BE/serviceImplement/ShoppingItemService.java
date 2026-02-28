@@ -10,6 +10,8 @@ import com.wecamp.TetPlanner_BE.repository.ShoppingItemRepository;
 import com.wecamp.TetPlanner_BE.service.IShoppingItemService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -119,11 +121,22 @@ public class ShoppingItemService implements IShoppingItemService {
 
     @Override
     public ShoppingItemDTO getById(UUID userId, UUID itemId) {
-        return null;
+        ShoppingItem item = shoppingItemRepository
+                .findByIdAndUserId(itemId, userId)
+                .orElseThrow(() -> new NotFound("Shopping item not found"));
+
+        return shoppingItemMapper.toDTO(item);
     }
 
     @Override
-    public List<ShoppingItemDTO> getAllByUser(UUID userId) {
-        return List.of();
+    public Page<ShoppingItemDTO> getAllByUser(UUID userId, Pageable pageable) {
+        Page<ShoppingItem> page =
+                shoppingItemRepository.findByUserId(userId, pageable);
+
+        if(page.isEmpty()) {
+            throw new NotFound("No shopping items found for the user");
+        }
+
+        return page.map(shoppingItemMapper::toDTO);
     }
 }

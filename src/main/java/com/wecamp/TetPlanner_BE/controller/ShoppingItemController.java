@@ -3,10 +3,14 @@ package com.wecamp.TetPlanner_BE.controller;
 import com.wecamp.TetPlanner_BE.dto.BaseResponse;
 import com.wecamp.TetPlanner_BE.dto.request.shoppingItem.CreateShoppingItemRequest;
 import com.wecamp.TetPlanner_BE.dto.request.shoppingItem.UpdateShoppingItemRequest;
+import com.wecamp.TetPlanner_BE.dto.response.BudgetListResponse;
 import com.wecamp.TetPlanner_BE.dto.response.ShoppingItemDTO;
 import com.wecamp.TetPlanner_BE.service.IShoppingItemService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +24,44 @@ import java.util.UUID;
 public class ShoppingItemController {
 
     private final IShoppingItemService shoppingItemService;
+
+    @GetMapping
+    public ResponseEntity<BaseResponse<Page<ShoppingItemDTO>>> getAllShoppingItems(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        UUID userId = UUID.fromString(authentication.getName());
+        Page<ShoppingItemDTO> response =
+                shoppingItemService.getAllByUser(
+                        userId,
+                        PageRequest.of(page, size)
+                );
+
+        return ResponseEntity.ok(
+                new BaseResponse<>(
+                        true,
+                        "Shopping items retrieved successfully",
+                        response
+                )
+        );
+    }
+
+    @GetMapping("/{itemId}")
+    public ResponseEntity<BaseResponse<ShoppingItemDTO>> getShoppingItemById(
+            Authentication authentication,
+            @PathVariable UUID itemId
+    ) {
+        UUID userId = UUID.fromString(authentication.getName());
+        ShoppingItemDTO response = shoppingItemService.getById(userId, itemId);
+        return ResponseEntity.ok(
+                new BaseResponse<>(
+                        true,
+                        "Shopping item retrieved successfully",
+                        response
+                )
+        );
+    }
 
     @PostMapping
     public ResponseEntity<BaseResponse<ShoppingItemDTO>> createShoppingItem(

@@ -14,22 +14,13 @@ import java.util.UUID;
 
 @Repository
 public interface ShoppingItemRepository extends JpaRepository<ShoppingItem, UUID> {
-    @Query("""
-        SELECT COALESCE(SUM(s.price * s.quantity), 0)
-        FROM ShoppingItem s
-        WHERE s.budget.id = :budgetId
-    """)
-    Long getTotalExpenseByBudgetId(@Param("budgetId") UUID budgetId);
 
     List<ShoppingItem> findByBudgetId(UUID budgetId);
 
     List<ShoppingItem> findByBudget_IdIn(List<UUID> budgetIds);
 
-    Page<ShoppingItem> getAllByBudgetId(UUID budgetId, Pageable pageable);
-
-    List<ShoppingItem> findByUserId(UUID userId);
+    Page<ShoppingItem> findByUserId(UUID userId, Pageable pageable);
 
     Optional<ShoppingItem> findByIdAndUserId(UUID id, UUID userId);
 
-    void deleteByIdAndUserId(UUID id, UUID userId);
 }
