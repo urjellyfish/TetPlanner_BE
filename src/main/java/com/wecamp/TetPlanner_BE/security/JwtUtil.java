@@ -67,4 +67,29 @@ public class JwtUtil {
                         .getSubject()
         );
     }
+
+    public String getUserFromToken(String token) {
+        return Jwts.parser().verifyWith(secretKey).build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+    }
+
+    public String getClaim(String token, String claimKey) {
+        Object value = Jwts.parser().verifyWith(secretKey).build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get(claimKey);
+        return value == null ? null : value.toString();
+    }
+
+    public boolean validateJwtToken(String token) {
+        try{
+            Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token);
+            return true;
+        } catch (Exception e) {
+            log.error("JWT error " + e);
+        }
+        return false;
+    }
 }

@@ -1,8 +1,8 @@
-package com.wecamp.TetPlanner_BE.service.impl;
+package com.wecamp.TetPlanner_BE.serviceImplement;
 
-import com.wecamp.TetPlanner_BE.dto.request.TaskRequest;
 import com.wecamp.TetPlanner_BE.dto.request.TaskUpdateRequest;
-import com.wecamp.TetPlanner_BE.dto.request.UpdateTaskStatusRequest;
+import com.wecamp.TetPlanner_BE.dto.request.task.TaskRequest;
+import com.wecamp.TetPlanner_BE.dto.request.task.UpdateTaskStatusRequest;
 import com.wecamp.TetPlanner_BE.dto.response.TaskListResponse;
 import com.wecamp.TetPlanner_BE.dto.response.TaskResponse;
 import com.wecamp.TetPlanner_BE.entity.Occasion;

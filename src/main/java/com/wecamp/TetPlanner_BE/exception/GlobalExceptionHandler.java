@@ -33,6 +33,17 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(NotFound.class)
+    public ResponseEntity<BaseResponse<?>> handleNotFound(NotFound ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new BaseResponse<>(
+                        false,
+                        ex.getMessage(),
+                        null
+                ));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<BaseResponse<?>> handleValidationException(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
