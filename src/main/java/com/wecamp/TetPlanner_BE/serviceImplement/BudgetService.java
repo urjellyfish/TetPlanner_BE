@@ -1,12 +1,16 @@
 package com.wecamp.TetPlanner_BE.serviceImplement;
 
 import com.wecamp.TetPlanner_BE.dto.mapper.BudgetMapper;
+import com.wecamp.TetPlanner_BE.dto.request.CreateBudgetRequest;
+import com.wecamp.TetPlanner_BE.dto.request.UpdateBudgetRequest;
 import com.wecamp.TetPlanner_BE.dto.response.BudgetItemDTO;
 import com.wecamp.TetPlanner_BE.dto.response.BudgetListResponse;
 import com.wecamp.TetPlanner_BE.dto.response.BudgetSummaryResponse;
 import com.wecamp.TetPlanner_BE.dto.response.SummaryDTO;
 import com.wecamp.TetPlanner_BE.entity.Budget;
+import com.wecamp.TetPlanner_BE.entity.Occasion;
 import com.wecamp.TetPlanner_BE.entity.ShoppingItem;
+import com.wecamp.TetPlanner_BE.entity.User;
 import com.wecamp.TetPlanner_BE.entity.enums.BudgetStatus;
 import com.wecamp.TetPlanner_BE.exception.NotFound;
 import com.wecamp.TetPlanner_BE.repository.BudgetRepository;
@@ -17,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,8 +36,71 @@ public class BudgetService implements IBudgetService {
     private final BudgetMapper budgetMapper;
 
     @Override
+    public BudgetSummaryResponse createBudget(UUID userId, CreateBudgetRequest request) {
+
+        Budget budget = new Budget();
+        budget.setUser(
+                User.builder().id(userId).build()
+        );
+        budget.setName(request.getName());
+        budget.setTotalAmount(request.getTotalAmount());
+        budget.setCreatedAt(LocalDateTime.now());
+        budget.setUpdatedAt(LocalDateTime.now());
+
+        if (request.getOccasionId() != null) {
+            budget.setOccasion(
+                    Occasion.builder()
+                            .id(request.getOccasionId())
+                            .build()
+            );
+        }
+
+        budgetRepository.save(budget);
+
+        return BudgetSummaryResponse.builder()
+                .id(budget.getId())
+                .name(budget.getName())
+                .totalAmount(budget.getTotalAmount())
+                .actualSpent(0)
+                .expectedSpent(0)
+                .actualRemaining(budget.getTotalAmount())
+                .expectedRemaining(budget.getTotalAmount())
+                .shoppingItems(List.of())
+                .build();
+    }
+
+    @Override
+    public BudgetSummaryResponse updateBudget(UUID userId, UUID budgetId, UpdateBudgetRequest request) {
+        Budget budget = budgetRepository
+                .findByIdAndUserIdAndIsDeletedFalse(budgetId, userId)
+                .orElseThrow(() -> new NotFound("Budget not found"));
+
+        if (request.getTotalAmount() != null) {
+            budget.setTotalAmount(request.getTotalAmount());
+        }
+
+        budget.setUpdatedAt(LocalDateTime.now());
+
+        budgetRepository.save(budget);
+
+        return getBudgetSummaryForCurrentYear(userId, budget.getId());
+    }
+
+    @Override
+    public void deleteBudget(UUID userId, UUID budgetId) {
+        Budget budget = budgetRepository
+                .findByIdAndUserIdAndIsDeletedFalse(budgetId, userId)
+                .orElseThrow(() -> new NotFound("Budget not found"));
+
+        budget.setDeleted(true);
+        budget.setUpdatedAt(LocalDateTime.now());
+
+        budgetRepository.save(budget);
+    }
+
+    @Override
     public BudgetListResponse getBudgetsForUser(UUID userId, Pageable pageable) {
-        Page<Budget> budgetPage = budgetRepository.getByUserId(userId, pageable);
+        Page<Budget> budgetPage = budgetRepository.getByUserIdAndIsDeletedFalse(userId, pageable);
 
         if (budgetPage.isEmpty()){
             throw new NotFound("No budgets found for the user");
@@ -119,7 +187,7 @@ public class BudgetService implements IBudgetService {
     public BudgetSummaryResponse getBudgetSummaryForCurrentYear(UUID userId, UUID budgetId) {
 
         Budget budget = budgetRepository
-                .findByIdAndUserId(budgetId, userId)
+                .findByIdAndUserIdAndIsDeletedFalse(budgetId, userId)
                 .orElseThrow(() -> new NotFound("Budget not found"));
 
         List<ShoppingItem> items =

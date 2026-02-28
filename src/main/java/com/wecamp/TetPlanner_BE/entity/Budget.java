@@ -24,11 +24,9 @@ public class Budget {
 
     private String name;
 
-    private LocalDate startDate;
-
-    private LocalDate endDate;
-
     private Long totalAmount;
+
+    private boolean isDeleted = false;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

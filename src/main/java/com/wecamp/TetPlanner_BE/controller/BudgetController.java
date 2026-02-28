@@ -1,6 +1,8 @@
 package com.wecamp.TetPlanner_BE.controller;
 
 import com.wecamp.TetPlanner_BE.dto.BaseResponse;
+import com.wecamp.TetPlanner_BE.dto.request.CreateBudgetRequest;
+import com.wecamp.TetPlanner_BE.dto.request.UpdateBudgetRequest;
 import com.wecamp.TetPlanner_BE.dto.response.BudgetListResponse;
 import com.wecamp.TetPlanner_BE.dto.response.BudgetSummaryResponse;
 import com.wecamp.TetPlanner_BE.service.IBudgetService;
@@ -33,6 +35,51 @@ public class BudgetController {
                         true,
                         "Budgets retrieved successfully",
                         response
+                ));
+    }
+
+    @PostMapping
+    public ResponseEntity<BaseResponse<BudgetSummaryResponse>> createBudget(
+            Authentication authentication,
+            @RequestBody CreateBudgetRequest request
+    ) {
+        UUID userId = UUID.fromString(authentication.getName());
+        BudgetSummaryResponse response = budgetService.createBudget(userId, request);
+        return ResponseEntity
+                .ok(new BaseResponse<>(
+                        true,
+                        "Budget created successfully",
+                        response
+                ));
+    }
+
+    @PutMapping("/{budgetId}")
+    public ResponseEntity<BaseResponse<BudgetSummaryResponse>> updateBudget(
+            Authentication authentication,
+            @PathVariable UUID budgetId,
+            @RequestBody UpdateBudgetRequest request
+    ) {
+        UUID userId = UUID.fromString(authentication.getName());
+        BudgetSummaryResponse response = budgetService.updateBudget(userId, budgetId, request);
+        return ResponseEntity
+                .ok(new BaseResponse<>(
+                        true,
+                        "Budget updated successfully",
+                        response
+                ));
+    }
+    @DeleteMapping("/{budgetId}")
+    public ResponseEntity<BaseResponse<BudgetSummaryResponse>> deleteBudget(
+            Authentication authentication,
+            @PathVariable UUID budgetId
+    ) {
+        UUID userId = UUID.fromString(authentication.getName());
+        budgetService.deleteBudget(userId, budgetId);
+        return ResponseEntity
+                .ok(new BaseResponse<>(
+                        true,
+                        "Budget updated successfully",
+                        null
                 ));
     }
 

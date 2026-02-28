@@ -9,6 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface BudgetRepository extends JpaRepository<Budget, UUID> {
-    Page<Budget> getByUserId(UUID userId, Pageable pageable);
-    Optional<Budget> findByIdAndUserId(UUID id, UUID userId);
+    Page<Budget> getByUserIdAndIsDeletedFalse(UUID userId, Pageable pageable);
+    Optional<Budget> findByIdAndUserIdAndIsDeletedFalse(UUID id, UUID userId);
 }
