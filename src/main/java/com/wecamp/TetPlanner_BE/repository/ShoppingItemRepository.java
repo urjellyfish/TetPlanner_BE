@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -25,4 +26,10 @@ public interface ShoppingItemRepository extends JpaRepository<ShoppingItem, UUID
     List<ShoppingItem> findByBudget_IdIn(List<UUID> budgetIds);
 
     Page<ShoppingItem> getAllByBudgetId(UUID budgetId, Pageable pageable);
+
+    List<ShoppingItem> findByUserId(UUID userId);
+
+    Optional<ShoppingItem> findByIdAndUserId(UUID id, UUID userId);
+
+    void deleteByIdAndUserId(UUID id, UUID userId);
 }

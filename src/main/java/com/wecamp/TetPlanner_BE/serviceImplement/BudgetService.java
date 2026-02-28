@@ -1,8 +1,8 @@
 package com.wecamp.TetPlanner_BE.serviceImplement;
 
 import com.wecamp.TetPlanner_BE.dto.mapper.BudgetMapper;
-import com.wecamp.TetPlanner_BE.dto.request.CreateBudgetRequest;
-import com.wecamp.TetPlanner_BE.dto.request.UpdateBudgetRequest;
+import com.wecamp.TetPlanner_BE.dto.request.budget.CreateBudgetRequest;
+import com.wecamp.TetPlanner_BE.dto.request.budget.UpdateBudgetRequest;
 import com.wecamp.TetPlanner_BE.dto.response.BudgetItemDTO;
 import com.wecamp.TetPlanner_BE.dto.response.BudgetListResponse;
 import com.wecamp.TetPlanner_BE.dto.response.BudgetSummaryResponse;

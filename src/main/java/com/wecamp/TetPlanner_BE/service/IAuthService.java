@@ -1,8 +1,8 @@
 package com.wecamp.TetPlanner_BE.service;
 
-import com.wecamp.TetPlanner_BE.dto.request.LoginRequest;
-import com.wecamp.TetPlanner_BE.dto.request.RegisterRequest;
-import com.wecamp.TetPlanner_BE.dto.request.VerifyRequest;
+import com.wecamp.TetPlanner_BE.dto.request.auth.LoginRequest;
+import com.wecamp.TetPlanner_BE.dto.request.auth.RegisterRequest;
+import com.wecamp.TetPlanner_BE.dto.request.auth.VerifyRequest;
 import com.wecamp.TetPlanner_BE.dto.response.TokenResponse;
 
 public interface IAuthService {

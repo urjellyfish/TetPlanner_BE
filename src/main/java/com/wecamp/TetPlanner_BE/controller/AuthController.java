@@ -1,12 +1,11 @@
 package com.wecamp.TetPlanner_BE.controller;
 
 import com.wecamp.TetPlanner_BE.dto.BaseResponse;
-import com.wecamp.TetPlanner_BE.dto.request.*;
+import com.wecamp.TetPlanner_BE.dto.request.auth.*;
 import com.wecamp.TetPlanner_BE.dto.response.TokenResponse;
 import com.wecamp.TetPlanner_BE.service.IAuthService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

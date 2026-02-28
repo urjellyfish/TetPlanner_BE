@@ -21,15 +21,19 @@ public class ShoppingItem {
     @GeneratedValue
     private UUID id;
 
+    @Column(nullable = false)
     private String name;
 
     @Column(columnDefinition = "TEXT")
     private String note;
 
+    @Column(nullable = false)
     private Long price;
 
+    @Column(nullable = false)
     private Integer quantity;
 
+    @Column(nullable = false)
     private Boolean isChecked = false;
 
     @CreationTimestamp
@@ -38,19 +42,19 @@ public class ShoppingItem {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private ShoppingCategory category;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "occasion_id")
     private Occasion occasion;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "budget_id")
     private Budget budget;
 }

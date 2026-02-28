@@ -1,8 +1,8 @@
 package com.wecamp.TetPlanner_BE.serviceImplement;
 
-import com.wecamp.TetPlanner_BE.dto.request.LoginRequest;
-import com.wecamp.TetPlanner_BE.dto.request.RegisterRequest;
-import com.wecamp.TetPlanner_BE.dto.request.VerifyRequest;
+import com.wecamp.TetPlanner_BE.dto.request.auth.LoginRequest;
+import com.wecamp.TetPlanner_BE.dto.request.auth.RegisterRequest;
+import com.wecamp.TetPlanner_BE.dto.request.auth.VerifyRequest;
 import com.wecamp.TetPlanner_BE.dto.response.TokenResponse;
 import com.wecamp.TetPlanner_BE.entity.RefreshToken;
 import com.wecamp.TetPlanner_BE.entity.User;
@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Random;
@@ -81,6 +82,7 @@ public class AuthService implements IAuthService {
         user.setHashPassword(password);
         user.setFullName(fullName);
         user.setEmailVerified(true);
+        user.setCreatedAt(Instant.now());
 
         userRepository.save(user);
 

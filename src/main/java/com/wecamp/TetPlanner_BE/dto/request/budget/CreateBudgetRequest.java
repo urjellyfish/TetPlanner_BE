@@ -1,4 +1,4 @@
-package com.wecamp.TetPlanner_BE.dto.request;
+package com.wecamp.TetPlanner_BE.dto.request.budget;
 
 import lombok.Data;
 

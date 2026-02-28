@@ -1,4 +1,4 @@
-package com.wecamp.TetPlanner_BE.dto.request;
+package com.wecamp.TetPlanner_BE.dto.request.auth;
 
 import lombok.Data;
 

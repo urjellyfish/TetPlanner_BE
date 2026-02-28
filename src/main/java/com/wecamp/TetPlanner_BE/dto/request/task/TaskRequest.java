@@ -1,4 +1,4 @@
-package com.wecamp.TetPlanner_BE.dto.request;
+package com.wecamp.TetPlanner_BE.dto.request.task;
 
 import com.wecamp.TetPlanner_BE.entity.enums.Priority;
 import com.wecamp.TetPlanner_BE.entity.enums.Status;
