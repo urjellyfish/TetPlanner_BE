@@ -12,7 +12,7 @@ public class UpdateShoppingItemRequest {
     private String note;
     private Boolean isChecked;
 
-    private UUID categoryId;
+    private Long categoryId;
     private UUID budgetId;
-    private Long occasionId;
+    private UUID occasionId;
 }

@@ -19,13 +19,13 @@ public class ShoppingItemDTO {
 
     private Boolean isChecked;
 
-    private UUID categoryId;
+    private Long categoryId;
     private String categoryName;
 
     private UUID budgetId;
     private String budgetName;
 
-    private long occasionId;
+    private UUID occasionId;
     private String occasionName;
 
     private LocalDateTime createdAt;

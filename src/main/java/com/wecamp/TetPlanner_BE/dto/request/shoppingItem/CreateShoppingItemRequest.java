@@ -11,7 +11,7 @@ public class CreateShoppingItemRequest {
     private Long price;
     private String note;
 
-    private UUID categoryId;
+    private Long categoryId;
     private UUID budgetId;
-    private Long occasionId;
+    private UUID occasionId;
 }

@@ -14,5 +14,12 @@ public class TaskCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
+
+    private boolean isDeleted = false;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false, columnDefinition = "uuid")
+    private User user;
 }
