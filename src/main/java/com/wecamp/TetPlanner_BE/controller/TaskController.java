@@ -2,6 +2,7 @@ package com.wecamp.TetPlanner_BE.controller;
 
 import com.wecamp.TetPlanner_BE.dto.BaseResponse;
 import com.wecamp.TetPlanner_BE.dto.request.TaskRequest;
+import com.wecamp.TetPlanner_BE.dto.request.TaskUpdateRequest;
 import com.wecamp.TetPlanner_BE.dto.request.UpdateTaskStatusRequest;
 import com.wecamp.TetPlanner_BE.dto.response.TaskListResponse;
 import com.wecamp.TetPlanner_BE.dto.response.TaskResponse;
@@ -24,31 +25,45 @@ import java.util.UUID;
 @RequestMapping("/api/tasks")
 @AllArgsConstructor
 public class TaskController {
-    public final ITaskService taskService;
-    public final JwtUtil jwtUtil;
+    private final ITaskService taskService;
+    private final JwtUtil jwtUtil;
 
     @GetMapping
     public ResponseEntity<BaseResponse<List<TaskListResponse>>> getTasks(
+            @RequestHeader("Authorization") String token,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Priority priority,
             @RequestParam(required = false) Status status,
             @RequestParam(required = false) LocalDate dueDate,
             Pageable pageable
     ) {
-
         try {
-            List<TaskListResponse> tasks = taskService.getTasks(categoryId, priority, status, dueDate, pageable).getContent();
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Unauthorized: Missing or invalid token", null));
+            }
+            String bearerToken = token.substring(7);
+            UUID userId = jwtUtil.extractUserId(bearerToken);
+            List<TaskListResponse> tasks = taskService.getTasks(userId, categoryId, priority, status, dueDate, pageable).getContent();
             return ResponseEntity.ok(new BaseResponse<>(true, "Tasks retrieved successfully", tasks));
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new BaseResponse<>(false, "Error retrieving tasks: " + e.getMessage(), null));
+                    .body(new BaseResponse<>(false, "Something went wrong, please try again", null));
         }
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<BaseResponse<List<TaskListResponse>>> getTasksByUserId(@PathVariable UUID userId) {
+    @GetMapping("/user")
+    public ResponseEntity<BaseResponse<List<TaskListResponse>>> getTasksByUser(@RequestHeader("Authorization") String token) {
         try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Unauthorized: Missing or invalid token", null));
+            }
+            String bearerToken = token.substring(7);
+            UUID userId = jwtUtil.extractUserId(bearerToken);
             List<TaskListResponse> tasks = taskService.getTasksByUserId(userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Tasks retrieved successfully", tasks));
         } catch (RuntimeException e) {
@@ -59,14 +74,21 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BaseResponse<TaskResponse>> getTaskById(@PathVariable Long id) {
+    public ResponseEntity<BaseResponse<TaskResponse>> getTaskById(@RequestHeader("Authorization") String token, @PathVariable UUID id) {
         try {
-            TaskResponse task = taskService.getTask(id);
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Unauthorized: Missing or invalid token", null));
+            }
+            String bearerToken = token.substring(7);
+            UUID userId = jwtUtil.extractUserId(bearerToken);
+            TaskResponse task = taskService.getTask(id, userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Task retrieved successfully", task));
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body(new BaseResponse<>(false, "Task not found with id: " + id, null));
+                    .body(new BaseResponse<>(false, "Task not found", null));
         }
     }
 
@@ -83,8 +105,43 @@ public class TaskController {
             }
 
             String token = authorizationHeader.substring(7);
-            TaskResponse task = taskService.createTask(taskRequest, jwtUtil.extractUserId(token));
-            return ResponseEntity.ok(new BaseResponse<>(true, "Task created successfully", task));
+            UUID userId = jwtUtil.extractUserId(token);
+            TaskResponse task = taskService.createTask(taskRequest, userId);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(new BaseResponse<>(true, "Task created successfully", task));
+        } catch (SecurityException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new BaseResponse<>(false, e.getMessage(), null));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new BaseResponse<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BaseResponse<TaskResponse>> updateTask(
+            @Valid @RequestBody TaskUpdateRequest taskUpdateRequest,
+            @PathVariable UUID id,
+            @RequestHeader("Authorization") String authorizationHeader
+    ) {
+        try {
+            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Invalid or missing authorization token", null));
+            }
+
+            String token = authorizationHeader.substring(7);
+            UUID userId = jwtUtil.extractUserId(token);
+            TaskResponse task = taskService.updateTask(taskUpdateRequest, id, userId);
+            return ResponseEntity.ok(new BaseResponse<>(true, "Task updated successfully", task));
+        } catch (SecurityException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new BaseResponse<>(false, "Task not found or you do not have permission to update this task", null));
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
@@ -93,39 +150,52 @@ public class TaskController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<BaseResponse<Void>> deleteTask(@PathVariable Long id) {
-
+    public ResponseEntity<BaseResponse<Void>> deleteTask(
+            @PathVariable UUID id,
+            @RequestHeader("Authorization") String authorizationHeader
+    ) {
         try {
-            taskService.deleteTask(id);
+            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Invalid or missing authorization token", null));
+            }
+
+            String token = authorizationHeader.substring(7);
+            UUID userId = jwtUtil.extractUserId(token);
+            taskService.deleteTask(id, userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Task deleted successfully", null));
+        } catch (SecurityException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new BaseResponse<>(false, "You do not have permission to delete this task", null));
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body(new BaseResponse<>(false, "Task not found with id: " + id, null));
-        }
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<BaseResponse<TaskResponse>> updateTask(@Valid @RequestBody TaskRequest taskRequest, @PathVariable Long id) {
-        try {
-            TaskResponse task = taskService.updateTask(taskRequest, id);
-            return ResponseEntity.ok(new BaseResponse<>(true, "Task updated successfully", task));
-        } catch (RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(new BaseResponse<>(false, "Task not found with id: " + id, null));
+                    .body(new BaseResponse<>(false, "Task not found", null));
         }
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<BaseResponse<TaskResponse>> updateTaskStatus(@Valid @RequestBody UpdateTaskStatusRequest status, @PathVariable Long id) {
+    public ResponseEntity<BaseResponse<TaskResponse>> updateTaskStatus(
+            @RequestHeader("Authorization") String token,
+            @Valid @RequestBody UpdateTaskStatusRequest status,
+            @PathVariable UUID id
+    ) {
         try {
-            TaskResponse task = taskService.updateTaskStatus(status, id);
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new BaseResponse<>(false, "Unauthorized: Missing or invalid token", null));
+            }
+            String bearerToken = token.substring(7);
+            UUID userId = jwtUtil.extractUserId(bearerToken);
+            TaskResponse task = taskService.updateTaskStatus(status, id, userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Task status updated successfully", task));
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body(new BaseResponse<>(false, "Task not found with id: " + id, null));
+                    .body(new BaseResponse<>(false, "Task not found", null));
         }
     }
 }

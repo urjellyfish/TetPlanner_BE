@@ -8,12 +8,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 public class TaskListResponse {
-    private Long id;
+    private UUID id;
     private String title;
     private String categoryName;
     private String timelineLabel;
@@ -24,22 +25,16 @@ public class TaskListResponse {
         TaskListResponse dto = new TaskListResponse();
         dto.setId(entity.getId());
         dto.setTitle(entity.getTitle());
-        if(entity.getCategory() != null) {
+        if (entity.getCategory() != null) {
             dto.setCategoryName(entity.getCategory().getName());
         }
         dto.setPriority(entity.getPriority());
-        if(occasion != null) {
+        if (occasion != null) {
             dto.setTimelineLabel(occasion.getName());
-        }else if(entity.getDueDate() != null) {
+        } else if (entity.getDueDate() != null) {
             dto.setTimelineLabel(entity.getDueDate().toString());
         }
-
         dto.setStatus(entity.getStatus());
-
         return dto;
-
-
-
     }
-    }
-
+}
