@@ -30,6 +30,10 @@ build/
 !**/src/test/**/build/
 
 /src/main/resources/application.yaml
+/src/main/resources/application-dev.yml
+
+.env
+docker-compose.yml
 
 ### VS Code ###
 .vscode/
