@@ -4,12 +4,12 @@ import com.wecamp.TetPlanner_BE.dto.BaseResponse;
 import com.wecamp.TetPlanner_BE.dto.request.OccasionRequest;
 import com.wecamp.TetPlanner_BE.dto.request.OccasionUpdateRequest;
 import com.wecamp.TetPlanner_BE.dto.response.OccasionResponse;
-import com.wecamp.TetPlanner_BE.security.JwtUtil;
 import com.wecamp.TetPlanner_BE.service.IOccasionService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -21,22 +21,14 @@ import java.util.UUID;
 @AllArgsConstructor
 public class OccasionController {
     private final IOccasionService occasionService;
-    private final JwtUtil jwtUtil;
 
     @PostMapping()
     public ResponseEntity<BaseResponse<OccasionResponse>> createOccasion(
             @Valid @RequestBody OccasionRequest request,
-            @RequestHeader("Authorization") String authorizationHeader
+            Authentication authentication
     ) {
         try {
-            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-                return ResponseEntity
-                        .status(HttpStatus.UNAUTHORIZED)
-                        .body(new BaseResponse<>(false, "Invalid or missing authorization token", null));
-            }
-
-            String token = authorizationHeader.substring(7);
-            UUID userId = jwtUtil.extractUserId(token);
+            UUID userId = UUID.fromString(authentication.getName());
             OccasionResponse occasion = occasionService.createOccasion(request, userId);
             return ResponseEntity
                     .status(HttpStatus.CREATED)
@@ -51,16 +43,10 @@ public class OccasionController {
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<OccasionResponse>> getOccasion(
             @PathVariable UUID id,
-            @RequestHeader("Authorization") String authorizationHeader
+            Authentication authentication
     ) {
         try {
-            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-                return ResponseEntity
-                        .status(HttpStatus.UNAUTHORIZED)
-                        .body(new BaseResponse<>(false, "Invalid or missing authorization token", null));
-            }
-            String token = authorizationHeader.substring(7);
-            UUID userId = jwtUtil.extractUserId(token);
+            UUID userId = UUID.fromString(authentication.getName());
             OccasionResponse occasion = occasionService.getOccasion(id, userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Occasion retrieved successfully", occasion));
         } catch (SecurityException e) {
@@ -76,17 +62,10 @@ public class OccasionController {
 
     @GetMapping
     public ResponseEntity<BaseResponse<List<OccasionResponse>>> getOccasionsByUser(
-            @RequestHeader("Authorization") String authorizationHeader
+            Authentication authentication
     ) {
         try {
-            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-                return ResponseEntity
-                        .status(HttpStatus.UNAUTHORIZED)
-                        .body(new BaseResponse<>(false, "Invalid or missing authorization token", null));
-            }
-
-            String token = authorizationHeader.substring(7);
-            UUID userId = jwtUtil.extractUserId(token);
+            UUID userId = UUID.fromString(authentication.getName());
             List<OccasionResponse> occasions = occasionService.getOccasionsByUserId(userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Occasions retrieved successfully", occasions));
         } catch (RuntimeException e) {
@@ -100,17 +79,10 @@ public class OccasionController {
     public ResponseEntity<BaseResponse<List<OccasionResponse>>> getOccasionsByDateRange(
             @RequestParam LocalDate from,
             @RequestParam LocalDate to,
-            @RequestHeader("Authorization") String authorizationHeader
+            Authentication authentication
     ) {
         try {
-            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-                return ResponseEntity
-                        .status(HttpStatus.UNAUTHORIZED)
-                        .body(new BaseResponse<>(false, "Invalid or missing authorization token", null));
-            }
-
-            String token = authorizationHeader.substring(7);
-            UUID userId = jwtUtil.extractUserId(token);
+            UUID userId = UUID.fromString(authentication.getName());
             List<OccasionResponse> occasions = occasionService.getOccasionsByDateRange(userId, from, to);
             return ResponseEntity.ok(new BaseResponse<>(true, "Occasions retrieved successfully", occasions));
         } catch (RuntimeException e) {
@@ -124,17 +96,10 @@ public class OccasionController {
     public ResponseEntity<BaseResponse<OccasionResponse>> updateOccasion(
             @Valid @RequestBody OccasionUpdateRequest request,
             @PathVariable UUID id,
-            @RequestHeader("Authorization") String authorizationHeader
+            Authentication authentication
     ) {
         try {
-            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-                return ResponseEntity
-                        .status(HttpStatus.UNAUTHORIZED)
-                        .body(new BaseResponse<>(false, "Invalid or missing authorization token", null));
-            }
-
-            String token = authorizationHeader.substring(7);
-            UUID userId = jwtUtil.extractUserId(token);
+            UUID userId = UUID.fromString(authentication.getName());
             OccasionResponse occasion = occasionService.updateOccasion(request, id, userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Occasion updated successfully", occasion));
         } catch (SecurityException e) {
@@ -151,17 +116,10 @@ public class OccasionController {
     @DeleteMapping("/{id}")
     public ResponseEntity<BaseResponse<Void>> deleteOccasion(
             @PathVariable UUID id,
-            @RequestHeader("Authorization") String authorizationHeader
+            Authentication authentication
     ) {
         try {
-            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-                return ResponseEntity
-                        .status(HttpStatus.UNAUTHORIZED)
-                        .body(new BaseResponse<>(false, "Invalid or missing authorization token", null));
-            }
-
-            String token = authorizationHeader.substring(7);
-            UUID userId = jwtUtil.extractUserId(token);
+            UUID userId = UUID.fromString(authentication.getName());
             occasionService.deleteOccasion(id, userId);
             return ResponseEntity.ok(new BaseResponse<>(true, "Occasion has been deleted successfully", null));
         } catch (SecurityException e) {

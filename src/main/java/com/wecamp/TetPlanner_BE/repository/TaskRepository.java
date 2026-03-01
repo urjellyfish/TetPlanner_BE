@@ -37,6 +37,12 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     List<Task> findByUserIdAndIsDeletedFalse(UUID userId);
 
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.user.id = :userId AND t.isDeleted = false")
+    long countByUserIdAndNotDeleted(@Param("userId") UUID userId);
+
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.user.id = :userId AND t.isDeleted = false AND t.status = 'DONE'")
+    long countByUserIdAndStatusDone(@Param("userId") UUID userId);
+
     @Modifying
     @Query("UPDATE Task t SET t.isDeleted = true WHERE t.id = :id")
     void softDeleteById(@Param("id") UUID id);

@@ -69,7 +69,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getServletPath().startsWith("/api/auth/");
+        String uri = request.getRequestURI();
+
+        return uri.startsWith("/api/auth/")
+                || uri.contains("/v3/api-docs")
+                || uri.contains("/swagger-ui")
+                || uri.contains("/swagger-resources")
+                || uri.contains("/webjars");
     }
 
     private void writeAuthError(HttpServletResponse response, ErrorCode errorCode)

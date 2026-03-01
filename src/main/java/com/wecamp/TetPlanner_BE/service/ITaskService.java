@@ -4,6 +4,7 @@ import com.wecamp.TetPlanner_BE.dto.request.task.TaskRequest;
 import com.wecamp.TetPlanner_BE.dto.request.TaskUpdateRequest;
 import com.wecamp.TetPlanner_BE.dto.request.task.UpdateTaskStatusRequest;
 import com.wecamp.TetPlanner_BE.dto.response.TaskListResponse;
+import com.wecamp.TetPlanner_BE.dto.response.TaskProgressResponse;
 import com.wecamp.TetPlanner_BE.dto.response.TaskResponse;
 import com.wecamp.TetPlanner_BE.entity.enums.Priority;
 import com.wecamp.TetPlanner_BE.entity.enums.Status;
@@ -33,4 +34,6 @@ public interface ITaskService {
     TaskResponse updateTaskStatus(UpdateTaskStatusRequest status, UUID id, UUID userId);
 
     List<TaskListResponse> getTasksByUserId(UUID userId);
+
+    TaskProgressResponse getTaskProgress(UUID userId);
 }
