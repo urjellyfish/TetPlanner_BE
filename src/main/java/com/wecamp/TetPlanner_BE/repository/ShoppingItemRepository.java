@@ -23,4 +23,21 @@ public interface ShoppingItemRepository extends JpaRepository<ShoppingItem, UUID
 
     Optional<ShoppingItem> findByIdAndUserId(UUID id, UUID userId);
 
+    @Query("SELECT COUNT(t) FROM ShoppingItem t WHERE t.user.id = :userId ")
+    long countByUserId(UUID userId);
+
+    @Query("SELECT COUNT(t) FROM ShoppingItem t WHERE t.user.id = :userId AND t.isChecked = false")
+    long countByUserIdAndIsCheckedFalse(UUID userId);
+
+    @Query("SELECT COALESCE(SUM(s.price * s.quantity), 0) FROM ShoppingItem s WHERE s.user.id = :userId AND s.isChecked = true AND s.budget IS NOT NULL AND s.budget.isDeleted = false")
+    long sumUsedBudgetByUserId(@Param("userId") UUID userId);
+
+    @Query("SELECT COALESCE(SUM(s.price * s.quantity), 0) FROM ShoppingItem s WHERE s.user.id = :userId AND s.isChecked = true AND s.budget IS NOT NULL AND s.budget.isDeleted = false AND s.budget.occasion.id = :occasionId")
+    long sumUsedBudgetByUserIdAndOccasionId(@Param("userId") UUID userId, @Param("occasionId") UUID occasionId);
+
+    @Query("SELECT COUNT(s) FROM ShoppingItem s WHERE s.budget.id = :budgetId")
+    long countByBudgetId(@Param("budgetId") UUID budgetId);
+
+    @Query("SELECT COUNT(s) FROM ShoppingItem s WHERE s.budget.id = :budgetId AND s.isChecked = false")
+    long countByBudgetIdAndIsCheckedFalse(@Param("budgetId") UUID budgetId);
 }

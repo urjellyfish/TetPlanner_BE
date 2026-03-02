@@ -3,10 +3,7 @@ package com.wecamp.TetPlanner_BE.serviceImplement;
 import com.wecamp.TetPlanner_BE.dto.mapper.BudgetMapper;
 import com.wecamp.TetPlanner_BE.dto.request.budget.CreateBudgetRequest;
 import com.wecamp.TetPlanner_BE.dto.request.budget.UpdateBudgetRequest;
-import com.wecamp.TetPlanner_BE.dto.response.BudgetItemDTO;
-import com.wecamp.TetPlanner_BE.dto.response.BudgetListResponse;
-import com.wecamp.TetPlanner_BE.dto.response.BudgetSummaryResponse;
-import com.wecamp.TetPlanner_BE.dto.response.SummaryDTO;
+import com.wecamp.TetPlanner_BE.dto.response.*;
 import com.wecamp.TetPlanner_BE.entity.Budget;
 import com.wecamp.TetPlanner_BE.entity.Occasion;
 import com.wecamp.TetPlanner_BE.entity.ShoppingItem;
@@ -31,199 +28,207 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BudgetService implements IBudgetService {
 
-    private final BudgetRepository budgetRepository;
-    private final ShoppingItemRepository shoppingItemRepository;
-    private final BudgetMapper budgetMapper;
+        private final BudgetRepository budgetRepository;
+        private final ShoppingItemRepository shoppingItemRepository;
+        private final BudgetMapper budgetMapper;
 
-    @Override
-    public BudgetSummaryResponse createBudget(UUID userId, CreateBudgetRequest request) {
+        @Override
+        public BudgetSummaryResponse createBudget(UUID userId, CreateBudgetRequest request) {
 
-        Budget budget = new Budget();
-        budget.setUser(
-                User.builder().id(userId).build()
-        );
-        budget.setName(request.getName());
-        budget.setTotalAmount(request.getTotalAmount());
-        budget.setCreatedAt(LocalDateTime.now());
-        budget.setUpdatedAt(LocalDateTime.now());
+                Budget budget = new Budget();
+                budget.setUser(
+                                User.builder().id(userId).build());
+                budget.setName(request.getName());
+                budget.setTotalAmount(request.getTotalAmount());
+                budget.setCreatedAt(LocalDateTime.now());
+                budget.setUpdatedAt(LocalDateTime.now());
 
-        if (request.getOccasionId() != null) {
-            budget.setOccasion(
-                    Occasion.builder()
-                            .id(request.getOccasionId())
-                            .build()
-            );
+                if (request.getOccasionId() != null) {
+                        budget.setOccasion(
+                                        Occasion.builder()
+                                                        .id(request.getOccasionId())
+                                                        .build());
+                }
+
+                budgetRepository.save(budget);
+
+                return BudgetSummaryResponse.builder()
+                                .id(budget.getId())
+                                .name(budget.getName())
+                                .totalAmount(budget.getTotalAmount())
+                                .actualSpent(0)
+                                .expectedSpent(0)
+                                .actualRemaining(budget.getTotalAmount())
+                                .expectedRemaining(budget.getTotalAmount())
+                                .shoppingItems(List.of())
+                                .build();
         }
 
-        budgetRepository.save(budget);
+        @Override
+        public BudgetSummaryResponse updateBudget(UUID userId, UUID budgetId, UpdateBudgetRequest request) {
+                Budget budget = budgetRepository
+                                .findByIdAndUserIdAndIsDeletedFalse(budgetId, userId)
+                                .orElseThrow(() -> new NotFound("Budget not found"));
 
-        return BudgetSummaryResponse.builder()
-                .id(budget.getId())
-                .name(budget.getName())
-                .totalAmount(budget.getTotalAmount())
-                .actualSpent(0)
-                .expectedSpent(0)
-                .actualRemaining(budget.getTotalAmount())
-                .expectedRemaining(budget.getTotalAmount())
-                .shoppingItems(List.of())
-                .build();
-    }
+                if (request.getTotalAmount() != null) {
+                        budget.setTotalAmount(request.getTotalAmount());
+                }
 
-    @Override
-    public BudgetSummaryResponse updateBudget(UUID userId, UUID budgetId, UpdateBudgetRequest request) {
-        Budget budget = budgetRepository
-                .findByIdAndUserIdAndIsDeletedFalse(budgetId, userId)
-                .orElseThrow(() -> new NotFound("Budget not found"));
+                budget.setUpdatedAt(LocalDateTime.now());
 
-        if (request.getTotalAmount() != null) {
-            budget.setTotalAmount(request.getTotalAmount());
+                budgetRepository.save(budget);
+
+                return getBudgetSummaryForCurrentYear(userId, budget.getId());
         }
 
-        budget.setUpdatedAt(LocalDateTime.now());
+        @Override
+        public void deleteBudget(UUID userId, UUID budgetId) {
+                Budget budget = budgetRepository
+                                .findByIdAndUserIdAndIsDeletedFalse(budgetId, userId)
+                                .orElseThrow(() -> new NotFound("Budget not found"));
 
-        budgetRepository.save(budget);
+                budget.setDeleted(true);
+                budget.setUpdatedAt(LocalDateTime.now());
 
-        return getBudgetSummaryForCurrentYear(userId, budget.getId());
-    }
-
-    @Override
-    public void deleteBudget(UUID userId, UUID budgetId) {
-        Budget budget = budgetRepository
-                .findByIdAndUserIdAndIsDeletedFalse(budgetId, userId)
-                .orElseThrow(() -> new NotFound("Budget not found"));
-
-        budget.setDeleted(true);
-        budget.setUpdatedAt(LocalDateTime.now());
-
-        budgetRepository.save(budget);
-    }
-
-    @Override
-    public BudgetListResponse getBudgetsForUser(UUID userId, Pageable pageable) {
-        Page<Budget> budgetPage = budgetRepository.getByUserIdAndIsDeletedFalse(userId, pageable);
-
-        if (budgetPage.isEmpty()){
-            throw new NotFound("No budgets found for the user");
+                budgetRepository.save(budget);
         }
-        List<Budget> budgets = budgetPage.getContent();
 
-        List<UUID> budgetIds = budgets.stream()
-                .map(Budget::getId)
-                .toList();
+        @Override
+        public BudgetListResponse getBudgetsForUser(UUID userId, Pageable pageable) {
+                Page<Budget> budgetPage = budgetRepository.getByUserIdAndIsDeletedFalse(userId, pageable);
 
-        // Lấy tất cả shopping items của các budget đó
-        List<ShoppingItem> allItems =
-                shoppingItemRepository.findByBudget_IdIn(budgetIds);
+                if (budgetPage.isEmpty()) {
+                        throw new NotFound("No budgets found for the user");
+                }
+                List<Budget> budgets = budgetPage.getContent();
 
-        // Map budgetId -> items
-        Map<UUID, List<ShoppingItem>> itemsByBudget =
-                allItems.stream()
-                        .collect(Collectors.groupingBy(
-                                item -> item.getBudget().getId()
-                        ));
+                List<UUID> budgetIds = budgets.stream()
+                                .map(Budget::getId)
+                                .toList();
 
-        long grandTotalBudget = 0;
-        long grandTotalExpected = 0;
-        long grandTotalActual = 0;
+                // Lấy tất cả shopping items của các budget đó
+                List<ShoppingItem> allItems = shoppingItemRepository.findByBudget_IdIn(budgetIds);
 
-        List<BudgetItemDTO> budgetDTOs = budgets.stream().map(budget -> {
+                // Map budgetId -> items
+                Map<UUID, List<ShoppingItem>> itemsByBudget = allItems.stream()
+                                .collect(Collectors.groupingBy(
+                                                item -> item.getBudget().getId()));
 
-            List<ShoppingItem> items =
-                    itemsByBudget.getOrDefault(budget.getId(), List.of());
+                long grandTotalBudget = 0;
+                long grandTotalExpected = 0;
+                long grandTotalActual = 0;
 
-            long expected = items.stream()
-                    .mapToLong(i -> i.getPrice() * i.getQuantity())
-                    .sum();
+                List<BudgetItemDTO> budgetDTOs = budgets.stream().map(budget -> {
 
-            long actual = items.stream()
-                    .filter(ShoppingItem::getIsChecked)
-                    .mapToLong(i -> i.getPrice() * i.getQuantity())
-                    .sum();
+                        List<ShoppingItem> items = itemsByBudget.getOrDefault(budget.getId(), List.of());
 
-            long total = budget.getTotalAmount();
-            long variance = total - actual;
+                        long expected = items.stream()
+                                        .mapToLong(i -> i.getPrice() * i.getQuantity())
+                                        .sum();
 
-            return BudgetItemDTO.builder()
-                    .id(budget.getId())
-                    .name(budget.getName())
-                    .totalBudget(total)
-                    .expectedSpent(expected)
-                    .actualSpent(actual)
-                    .variance(variance)
-                    .build();
+                        long actual = items.stream()
+                                        .filter(ShoppingItem::getIsChecked)
+                                        .mapToLong(i -> i.getPrice() * i.getQuantity())
+                                        .sum();
 
-        }).toList();
+                        long total = budget.getTotalAmount();
+                        long variance = total - actual;
 
-        SummaryDTO summary = SummaryDTO.builder()
-                .grandTotalBudget(
-                        budgetDTOs.stream()
-                                .mapToLong(BudgetItemDTO::getTotalBudget)
-                                .sum()
-                )
-                .grandTotalExpectedSpent(
-                        budgetDTOs.stream()
-                                .mapToLong(BudgetItemDTO::getExpectedSpent)
-                                .sum()
-                )
-                .grandTotalActualSpent(
-                        budgetDTOs.stream()
-                                .mapToLong(BudgetItemDTO::getActualSpent)
-                                .sum()
-                )
-                .grandTotalVariance(
-                        budgetDTOs.stream()
-                                .mapToLong(BudgetItemDTO::getVariance)
-                                .sum()
-                )
-                .build();
+                        return BudgetItemDTO.builder()
+                                        .id(budget.getId())
+                                        .name(budget.getName())
+                                        .totalBudget(total)
+                                        .expectedSpent(expected)
+                                        .actualSpent(actual)
+                                        .variance(variance)
+                                        .build();
 
-        return BudgetListResponse.builder()
-                .summary(summary)
-                .budgets(budgetDTOs)
-                .build();
-    }
+                }).toList();
 
-    @Override
-    public BudgetSummaryResponse getBudgetSummaryForCurrentYear(UUID userId, UUID budgetId) {
+                SummaryDTO summary = SummaryDTO.builder()
+                                .grandTotalBudget(
+                                                budgetDTOs.stream()
+                                                                .mapToLong(BudgetItemDTO::getTotalBudget)
+                                                                .sum())
+                                .grandTotalExpectedSpent(
+                                                budgetDTOs.stream()
+                                                                .mapToLong(BudgetItemDTO::getExpectedSpent)
+                                                                .sum())
+                                .grandTotalActualSpent(
+                                                budgetDTOs.stream()
+                                                                .mapToLong(BudgetItemDTO::getActualSpent)
+                                                                .sum())
+                                .grandTotalVariance(
+                                                budgetDTOs.stream()
+                                                                .mapToLong(BudgetItemDTO::getVariance)
+                                                                .sum())
+                                .build();
 
-        Budget budget = budgetRepository
-                .findByIdAndUserIdAndIsDeletedFalse(budgetId, userId)
-                .orElseThrow(() -> new NotFound("Budget not found"));
+                return BudgetListResponse.builder()
+                                .summary(summary)
+                                .budgets(budgetDTOs)
+                                .build();
+        }
 
-        List<ShoppingItem> items =
-                shoppingItemRepository.findByBudgetId(budget.getId());
+        @Override
+        public BudgetSummaryResponse getBudgetSummaryForCurrentYear(UUID userId, UUID budgetId) {
 
-        long actualSpent = items.stream()
-                .filter(ShoppingItem::getIsChecked)
-                .mapToLong(i -> i.getPrice() * i.getQuantity())
-                .sum();
+                Budget budget = budgetRepository
+                                .findByIdAndUserIdAndIsDeletedFalse(budgetId, userId)
+                                .orElseThrow(() -> new NotFound("Budget not found"));
 
-        long expectedSpent = items.stream()
-                .mapToLong(i -> i.getPrice() * i.getQuantity())
-                .sum();
+                List<ShoppingItem> items = shoppingItemRepository.findByBudgetId(budget.getId());
 
-        long totalBudget = budget.getTotalAmount();
+                long actualSpent = items.stream()
+                                .filter(ShoppingItem::getIsChecked)
+                                .mapToLong(i -> i.getPrice() * i.getQuantity())
+                                .sum();
 
-        return BudgetSummaryResponse.builder()
-                .id(budget.getId())
-                .name(budget.getName())
-                .totalAmount(totalBudget)
-                .actualSpent(actualSpent)
-                .expectedSpent(expectedSpent)
-                .actualRemaining(totalBudget - actualSpent)
-                .expectedRemaining(totalBudget - expectedSpent)
-                .shoppingItems(
-                        items.stream()
-                                .map(budgetMapper::toShoppingItemDTO)
-                                .toList()
-                )
-                .build();
-    }
+                long expectedSpent = items.stream()
+                                .mapToLong(i -> i.getPrice() * i.getQuantity())
+                                .sum();
 
-    private BudgetStatus calculateStatus(int percentage) {
-        if (percentage >= 100) return BudgetStatus.CRITICAL;
-        if (percentage >= 80) return BudgetStatus.WARNING;
-        return BudgetStatus.SAFE;
-    }
+                long totalBudget = budget.getTotalAmount();
+
+                return BudgetSummaryResponse.builder()
+                                .id(budget.getId())
+                                .name(budget.getName())
+                                .totalAmount(totalBudget)
+                                .actualSpent(actualSpent)
+                                .expectedSpent(expectedSpent)
+                                .actualRemaining(totalBudget - actualSpent)
+                                .expectedRemaining(totalBudget - expectedSpent)
+                                .shoppingItems(
+                                                items.stream()
+                                                                .map(budgetMapper::toShoppingItemDTO)
+                                                                .toList())
+                                .build();
+        }
+
+        @Override
+        public BudgetProgressResponse getBudgetProgress(UUID userId, UUID budgetId) {
+                Budget budget = budgetRepository
+                                .findByIdAndUserIdAndIsDeletedFalse(budgetId, userId)
+                                .orElseThrow(() -> new NotFound("Budget not found"));
+
+                long total = budget.getTotalAmount();
+
+                List<ShoppingItem> items = shoppingItemRepository.findByBudgetId(budgetId);
+                long used = items.stream()
+                                .filter(ShoppingItem::getIsChecked)
+                                .mapToLong(i -> i.getPrice() * i.getQuantity())
+                                .sum();
+
+                int percentage = total > 0 ? (int) Math.min((used * 100) / total, 100) : 0;
+                return new BudgetProgressResponse(total, used, percentage);
+        }
+
+        private BudgetStatus calculateStatus(int percentage) {
+                if (percentage >= 100)
+                        return BudgetStatus.CRITICAL;
+                if (percentage >= 80)
+                        return BudgetStatus.WARNING;
+                return BudgetStatus.SAFE;
+        }
 
 }
