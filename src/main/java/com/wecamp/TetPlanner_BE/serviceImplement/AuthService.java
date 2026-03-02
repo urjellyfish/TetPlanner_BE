@@ -103,7 +103,7 @@ public class AuthService implements IAuthService {
         String accessToken = jwtUtil.generateAccessToken(user);
         RefreshToken refreshToken = jwtUtil.generateRefreshToken(user);
 
-        return new TokenResponse(accessToken, refreshToken.getToken());
+        return new TokenResponse(user.getFullName(), accessToken, refreshToken.getToken());
     }
 
     @Override
@@ -123,7 +123,7 @@ public class AuthService implements IAuthService {
 
         String newAccessToken = jwtUtil.generateAccessToken(user);
 
-        return new TokenResponse(newAccessToken, newToken.getToken());
+        return new TokenResponse(user.getFullName(), newAccessToken, newToken.getToken());
     }
 
     @Transactional
@@ -140,7 +140,7 @@ public class AuthService implements IAuthService {
         String token = createResetCode(email);
 
         //mot doi thanh link cua fe
-        String resetLink = "http://localhost:8080/api/auth/reset-password?token=" + token;
+        String resetLink = "http://localhost:5173/reset-password?token=" + token;
 
         emailService.sendResetLink(email, resetLink);
     }
