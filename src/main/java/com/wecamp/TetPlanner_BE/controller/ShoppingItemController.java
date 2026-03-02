@@ -41,6 +41,25 @@ public class ShoppingItemController {
                                                 response));
         }
 
+        @GetMapping("/budget/{budgetId}")
+        public ResponseEntity<BaseResponse<Page<ShoppingItemDTO>>> getAllShoppingItemsByBudgetId(
+                        Authentication authentication,
+                        @PathVariable UUID budgetId,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size) {
+                UUID userId = UUID.fromString(authentication.getName());
+                Page<ShoppingItemDTO> response = shoppingItemService.getAllByBudgetId(
+                                userId,
+                                budgetId,
+                                PageRequest.of(page, size));
+
+                return ResponseEntity.ok(
+                                new BaseResponse<>(
+                                                true,
+                                                "Shopping items retrieved successfully",
+                                                response));
+        }
+
         @GetMapping("/{itemId}")
         public ResponseEntity<BaseResponse<ShoppingItemDTO>> getShoppingItemById(
                         Authentication authentication,

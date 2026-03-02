@@ -132,6 +132,17 @@ public class ShoppingItemService implements IShoppingItemService {
     }
 
     @Override
+    public Page<ShoppingItemDTO> getAllByBudgetId(UUID userId, UUID budgetId, Pageable pageable) {
+        Page<ShoppingItem> page = shoppingItemRepository.findAllByUserIdAndBudgetId(userId, budgetId, pageable);
+
+        if (page.isEmpty()) {
+            throw new NotFound("No shopping items found for the user");
+        }
+
+        return page.map(shoppingItemMapper::toDTO);
+    }
+
+    @Override
     public ShoppingProgressResponse getShoppingProgress(UUID userId, UUID budgetId) {
         long totalItems = shoppingItemRepository.countByBudgetId(budgetId);
         long remainingItems = shoppingItemRepository.countByBudgetIdAndIsCheckedFalse(budgetId);

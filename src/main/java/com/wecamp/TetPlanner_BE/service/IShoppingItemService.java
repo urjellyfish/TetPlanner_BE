@@ -20,5 +20,7 @@ public interface IShoppingItemService {
 
     Page<ShoppingItemDTO> getAllByUser(UUID userId, Pageable pageable);
 
+    Page<ShoppingItemDTO> getAllByBudgetId(UUID userId, UUID budgetId, Pageable pageable);
+
     ShoppingProgressResponse getShoppingProgress(UUID userId, UUID budgetId);
 }

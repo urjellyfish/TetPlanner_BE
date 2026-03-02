@@ -23,6 +23,20 @@ public interface ShoppingItemRepository extends JpaRepository<ShoppingItem, UUID
 
     Optional<ShoppingItem> findByIdAndUserId(UUID id, UUID userId);
 
+    @Query("""
+    SELECT s
+    FROM ShoppingItem s
+    JOIN s.user u
+    JOIN s.budget b
+    WHERE u.id = :userId
+    AND b.id = :budgetId
+    AND b.isDeleted = false
+""")
+    Page<ShoppingItem> findAllByUserIdAndBudgetId(
+            UUID userId,
+            UUID budgetId,
+            Pageable pageable);
+
     @Query("SELECT COUNT(t) FROM ShoppingItem t WHERE t.user.id = :userId ")
     long countByUserId(UUID userId);
 
