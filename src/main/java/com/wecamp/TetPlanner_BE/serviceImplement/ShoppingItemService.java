@@ -4,6 +4,7 @@ import com.wecamp.TetPlanner_BE.dto.mapper.ShoppingItemMapper;
 import com.wecamp.TetPlanner_BE.dto.request.shoppingItem.CreateShoppingItemRequest;
 import com.wecamp.TetPlanner_BE.dto.response.ShoppingItemDTO;
 import com.wecamp.TetPlanner_BE.dto.request.shoppingItem.UpdateShoppingItemRequest;
+import com.wecamp.TetPlanner_BE.dto.response.ShoppingProgressResponse;
 import com.wecamp.TetPlanner_BE.entity.*;
 import com.wecamp.TetPlanner_BE.exception.NotFound;
 import com.wecamp.TetPlanner_BE.repository.ShoppingItemRepository;
@@ -14,8 +15,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -42,24 +41,21 @@ public class ShoppingItemService implements IShoppingItemService {
             item.setCategory(
                     ShoppingCategory.builder()
                             .id(request.getCategoryId())
-                            .build()
-            );
+                            .build());
         }
 
         if (request.getBudgetId() != null) {
             item.setBudget(
                     Budget.builder()
                             .id(request.getBudgetId())
-                            .build()
-            );
+                            .build());
         }
 
         if (request.getOccasionId() != null) {
             item.setOccasion(
                     Occasion.builder()
                             .id(request.getOccasionId())
-                            .build()
-            );
+                            .build());
         }
 
         shoppingItemRepository.save(item);
@@ -91,24 +87,20 @@ public class ShoppingItemService implements IShoppingItemService {
 
         if (request.getCategoryId() != null)
             item.setCategory(
-                    ShoppingCategory.builder().id(request.getCategoryId()).build()
-            );
+                    ShoppingCategory.builder().id(request.getCategoryId()).build());
 
         if (request.getBudgetId() != null)
             item.setBudget(
-                    Budget.builder().id(request.getBudgetId()).build()
-            );
+                    Budget.builder().id(request.getBudgetId()).build());
 
         if (request.getOccasionId() != null)
             item.setOccasion(
-                    Occasion.builder().id(request.getOccasionId()).build()
-            );
+                    Occasion.builder().id(request.getOccasionId()).build());
 
         shoppingItemRepository.save(item);
 
         return shoppingItemMapper.toDTO(item);
     }
-
 
     @Override
     public void delete(UUID userId, UUID itemId) {
@@ -130,13 +122,21 @@ public class ShoppingItemService implements IShoppingItemService {
 
     @Override
     public Page<ShoppingItemDTO> getAllByUser(UUID userId, Pageable pageable) {
-        Page<ShoppingItem> page =
-                shoppingItemRepository.findByUserId(userId, pageable);
+        Page<ShoppingItem> page = shoppingItemRepository.findByUserId(userId, pageable);
 
-        if(page.isEmpty()) {
+        if (page.isEmpty()) {
             throw new NotFound("No shopping items found for the user");
         }
 
         return page.map(shoppingItemMapper::toDTO);
+    }
+
+    @Override
+    public ShoppingProgressResponse getShoppingProgress(UUID userId, UUID budgetId) {
+        long totalItems = shoppingItemRepository.countByBudgetId(budgetId);
+        long remainingItems = shoppingItemRepository.countByBudgetIdAndIsCheckedFalse(budgetId);
+        long checkedItems = totalItems - remainingItems;
+        int percentage = totalItems > 0 ? (int) Math.round((double) checkedItems / totalItems * 100) : 0;
+        return new ShoppingProgressResponse(totalItems, remainingItems, percentage);
     }
 }
