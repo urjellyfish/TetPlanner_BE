@@ -91,6 +91,7 @@ public class OccasionService implements IOccasionService {
         if (request.getDate() != null) {
             occasion.setDate(request.getDate());
         }
+        occasion.setUpdatedAt(LocalDateTime.now());
 
         Occasion updated = occasionRepository.save(occasion);
         return OccasionResponse.convertToDTO(updated);
