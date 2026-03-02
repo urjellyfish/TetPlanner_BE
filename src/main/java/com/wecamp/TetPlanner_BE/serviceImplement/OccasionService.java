@@ -49,18 +49,15 @@ public class OccasionService implements IOccasionService {
     @Override
     @Transactional(readOnly = true)
     public OccasionResponse getOccasion(UUID id, UUID userId) {
-        Occasion occasion = occasionRepository.findById(id)
+        Occasion occasion = occasionRepository.findByIdAndUserIdAndIsDeletedFalse(id, userId)
                 .orElseThrow(() -> new RuntimeException("Occasion not found"));
-        if (!occasion.getUser().getId().equals(userId)) {
-            throw new SecurityException("You do not have permission to access this occasion");
-        }
         return OccasionResponse.convertToDTO(occasion);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<OccasionResponse> getOccasionsByUserId(UUID userId) {
-        return occasionRepository.findByUserId(userId)
+        return occasionRepository.findByUserIdAndIsDeletedFalse(userId)
                 .stream()
                 .map(OccasionResponse::convertToDTO)
                 .toList();
@@ -69,7 +66,7 @@ public class OccasionService implements IOccasionService {
     @Override
     @Transactional(readOnly = true)
     public List<OccasionResponse> getOccasionsByDateRange(UUID userId, LocalDate from, LocalDate to) {
-        return occasionRepository.findByUserIdAndDateBetween(userId, from, to)
+        return occasionRepository.findByUserIdAndIsDeletedFalseAndDateBetween(userId, from, to)
                 .stream()
                 .map(OccasionResponse::convertToDTO)
                 .toList();
@@ -77,11 +74,8 @@ public class OccasionService implements IOccasionService {
 
     @Override
     public OccasionResponse updateOccasion(OccasionUpdateRequest request, UUID id, UUID userId) {
-        Occasion occasion = occasionRepository.findById(id)
+        Occasion occasion = occasionRepository.findByIdAndUserIdAndIsDeletedFalse(id, userId)
                 .orElseThrow(() -> new RuntimeException("Occasion not found"));
-        if (!occasion.getUser().getId().equals(userId)) {
-            throw new SecurityException("You do not have permission to update this occasion");
-        }
 
         String newName = request.getName() != null ? request.getName() : occasion.getName();
         LocalDate newDate = request.getDate() != null ? request.getDate() : occasion.getDate();
@@ -104,13 +98,11 @@ public class OccasionService implements IOccasionService {
 
     @Override
     public void deleteOccasion(UUID id, UUID userId) {
-        Occasion occasion = occasionRepository.findById(id)
+        Occasion occasion = occasionRepository.findByIdAndUserIdAndIsDeletedFalse(id, userId)
                 .orElseThrow(() -> new RuntimeException("Occasion not found"));
 
-        if (!occasion.getUser().getId().equals(userId)) {
-            throw new SecurityException("You do not have permission to delete this occasion");
-        }
-
-        occasionRepository.delete(occasion);
+        occasion.setDeleted(true);
+        occasion.setUpdatedAt(LocalDateTime.now());
+        occasionRepository.save(occasion);
     }
 }

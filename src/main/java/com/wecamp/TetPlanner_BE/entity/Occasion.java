@@ -30,6 +30,10 @@ public class Occasion {
 
     private LocalDateTime createdAt;
 
+    private LocalDateTime updatedAt;
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

@@ -13,9 +13,15 @@ import java.util.UUID;
 public interface OccasionRepository extends JpaRepository<Occasion, UUID> {
     List<Occasion> findByUserId(UUID userId);
 
+    List<Occasion> findByUserIdAndIsDeletedFalse(UUID userId);
+
     List<Occasion> findByUserIdAndDateBetween(UUID userId, LocalDate startDate, LocalDate endDate);
 
+    List<Occasion> findByUserIdAndIsDeletedFalseAndDateBetween(UUID userId, LocalDate startDate, LocalDate endDate);
+
     Optional<Occasion> findByUserIdAndNameAndDate(UUID userId, String name, LocalDate date);
+
+    Optional<Occasion> findByIdAndUserIdAndIsDeletedFalse(UUID id, UUID userId);
 
     Optional<Occasion> findByDate(LocalDate date);
 }
