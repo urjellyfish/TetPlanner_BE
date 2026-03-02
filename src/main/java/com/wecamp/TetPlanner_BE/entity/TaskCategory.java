@@ -20,6 +20,6 @@ public class TaskCategory {
     private boolean isDeleted = false;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false, columnDefinition = "uuid")
+    @JoinColumn(name = "user_id", columnDefinition = "uuid")
     private User user;
 }

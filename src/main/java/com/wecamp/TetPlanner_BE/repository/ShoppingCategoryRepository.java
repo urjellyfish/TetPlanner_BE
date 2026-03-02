@@ -17,12 +17,12 @@ public interface ShoppingCategoryRepository extends JpaRepository<ShoppingCatego
     @Query("UPDATE ShoppingCategory s SET s.isDeleted = true WHERE s.id = :id")
     void softDeleteById(@Param("id") Long id);
 
-    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM ShoppingCategory s WHERE s.name = :name AND s.user.id = :userId AND s.isDeleted = false")
+    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM ShoppingCategory s WHERE s.name = :name AND (s.user.id = :userId OR s.user.id IS null )AND s.isDeleted = false")
     boolean existsByNameAndUserIdAndIsDeletedFalse(@Param("name") String name, @Param("userId") UUID userId);
 
-    @Query("SELECT s FROM ShoppingCategory s WHERE s.user.id = :userId AND s.isDeleted = false")
+    @Query("SELECT s FROM ShoppingCategory s WHERE (s.user.id = :userId OR s.user.id IS null ) AND s.isDeleted = false")
     List<ShoppingCategory> findByUserIdAndIsDeletedFalse(@Param("userId") UUID userId);
 
-    @Query("SELECT s FROM ShoppingCategory s WHERE s.id = :id AND s.user.id = :userId")
+    @Query("SELECT s FROM ShoppingCategory s WHERE s.id = :id AND (s.user.id = :userId OR s.user.id IS null )")
     Optional<ShoppingCategory> findByIdAndUserId(@Param("id") Long id, @Param("userId") UUID userId);
 }
