@@ -15,6 +15,7 @@ import com.wecamp.TetPlanner_BE.service.IEmailService;
 import com.wecamp.TetPlanner_BE.service.IRedisService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,12 +24,16 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.List;
 import java.util.Random;
 
 @Data
 @Service
 @RequiredArgsConstructor
 public class AuthService implements IAuthService {
+
+    @Value("${spring.link.base-url}")
+    private String resetLinkBaseUrl;
 
     private final UserRepository userRepository;
     private final IRedisService redisService;
@@ -140,7 +145,7 @@ public class AuthService implements IAuthService {
         String token = createResetCode(email);
 
         //mot doi thanh link cua fe
-        String resetLink = "http://localhost:5173/reset-password?token=" + token;
+        String resetLink = resetLinkBaseUrl + token;
 
         emailService.sendResetLink(email, resetLink);
     }

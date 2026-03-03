@@ -25,6 +25,11 @@ spring:
           auth: true
           starttls:
             enable: true
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  link:
+    base-url: ${RESET_PASSWORD_PAGE_URL:http://localhost:5173}
+
 server:
   port: 8080
 
